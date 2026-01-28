@@ -17,7 +17,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
             color: white;
             padding: 15px 25px;
             display: flex;
@@ -35,8 +35,30 @@
         .header-left {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
             min-width: 280px;
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-wrap {
+            background: #fff;
+            border-radius: 10px;
+            padding: 6px 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .logo-wrap img {
+            height: 32px;
+            width: auto;
+            display: block;
         }
 
         .header-info {
@@ -141,7 +163,7 @@
         .filter-group select:focus,
         .filter-group input:focus {
             outline: none;
-            border-color: #e91e63;
+            border-color: #2e7d32;
         }
 
         .btn {
@@ -155,13 +177,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.4);
         }
 
         .btn-secondary {
@@ -206,7 +228,7 @@
         .card-value {
             font-size: 26px;
             font-weight: 700;
-            color: #e91e63;
+            color: #2e7d32;
         }
 
         .card-subtitle {
@@ -216,7 +238,7 @@
         }
 
         .card.highlight {
-            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
             color: white;
         }
 
@@ -377,7 +399,7 @@
 
         .search-box:focus {
             outline: none;
-            border-color: #e91e63;
+            border-color: #2e7d32;
         }
 
         .table-wrapper {
@@ -451,7 +473,7 @@
         }
 
         .load-btn {
-            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
             color: white;
             border: none;
             padding: 15px 40px;
@@ -463,17 +485,17 @@
 
         .load-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.4);
+            box-shadow: 0 8px 25px rgba(46, 125, 50, 0.4);
         }
 
         .load-btn-outline {
             background: transparent;
-            color: #9c27b0;
-            border: 2px solid #9c27b0;
+            color: #2e7d32;
+            border: 2px solid #2e7d32;
         }
 
         .load-btn-outline:hover {
-            background: rgba(156, 39, 176, 0.08);
+            background: rgba(46, 125, 50, 0.08);
             box-shadow: none;
         }
 
@@ -499,9 +521,9 @@
 
         .pagination button:hover { background: #f5f5f5; }
         .pagination button.active {
-            background: #e91e63;
+            background: #2e7d32;
             color: white;
-            border-color: #e91e63;
+            border-color: #2e7d32;
         }
 
         .pagination span { color: #666; font-size: 12px; }
@@ -518,9 +540,9 @@
 
         body.presentation-mode {
             background:
-                radial-gradient(circle at 12% 18%, rgba(233,30,99,0.35), transparent 55%),
-                radial-gradient(circle at 88% 22%, rgba(33,150,243,0.35), transparent 52%),
-                radial-gradient(circle at 40% 88%, rgba(156,39,176,0.35), transparent 60%),
+                radial-gradient(circle at 12% 18%, rgba(46,125,50,0.35), transparent 55%),
+                radial-gradient(circle at 88% 22%, rgba(129,199,132,0.35), transparent 52%),
+                radial-gradient(circle at 40% 88%, rgba(102,187,106,0.35), transparent 60%),
                 #0b0d12;
             overflow: hidden;
         }
@@ -591,7 +613,12 @@
 <body>
     <div class="header">
         <div class="header-left">
-            <h1>Dashboard DRG Brasil</h1>
+            <div class="brand-row">
+                <div class="logo-wrap">
+                    <img src="image_af2a80.png" alt="Logo">
+                </div>
+                <h1>Dashboard DRG Brasil</h1>
+            </div>
             <div class="header-info">
                 <span id="lastUpdate">Carregue os dados para iniciar</span>
                 <span id="slideIndicator" class="hidden"></span>
@@ -978,6 +1005,8 @@
         let paginaAtual = 1;
         let itensPorPagina = 50;
         let charts = {};
+        let sankeyTransform = { x: 0, y: 0 };
+        let sankeyPanHandlersAttached = false;
 
         // Mapeamentos
         const situacoes = { '1': 'Admissional', '2': 'Prorrogacao', '3': 'Alta', '4': 'Autorizacao' };
@@ -1809,10 +1838,12 @@
                 try { c.dispose(); } catch (e) {}
             });
             charts = {};
+            sankeyTransform.x = 0;
+            sankeyTransform.y = 0;
 
             if (!window.echarts) return;
 
-            const palette = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#ff9800', '#ff5722'];
+            const palette = ['#00E5FF', '#2979FF', '#651FFF', '#D500F9', '#FF1744', '#FF9100', '#C6FF00', '#00E676', '#1DE9B6', '#FFEA00', '#FF3D00', '#00B0FF'];
             const trunc = (s, max = 26) => (s && s.length > max ? s.substring(0, max) + '...' : (s || ''));
             const sortedEntries = (obj) => Object.entries(obj).sort((a, b) => b[1] - a[1]);
             const num = (v) => {
@@ -1908,7 +1939,7 @@
                 const data = Object.entries(porSit).map(([name, value]) => ({ name, value }));
                 if (!data.length) noData(chartSit);
                 else chartSit.setOption({
-                    color: ['#2196f3', '#ff9800', '#4caf50', '#9c27b0', '#607d8b'],
+                    color: ['#00E5FF', '#2979FF', '#D500F9', '#FF9100', '#C6FF00'],
                     tooltip: { trigger: 'item' },
                     legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
                     series: [{ type: 'pie', radius: ['45%', '72%'], label: { show: false }, data }]
@@ -1921,7 +1952,7 @@
                 const desc = r.drgBrasilRefinado?.descricao || r.drg_descricao;
                 return r.drg_codigo_nome || (code && desc ? `${code} - ${desc}` : (code || desc));
             })), 'chartDRG');
-            barH('chartDRG', drgEntries, { color: '#e91e63', truncMax: 40 });
+            barH('chartDRG', drgEntries, { color: '#00E676', truncMax: 40 });
 
             // 4) MDC (ranking)
             const mdcEntries = aplicarTop(sortedEntries(contar(r => r.drgBrasilRefinado?.mdc?.descricao || r.mdc_descricao || 'Sem MDC')), 'chartMDC');
@@ -1941,7 +1972,7 @@
             const chartIdade = init('chartIdade');
             if (chartIdade) {
                 chartIdade.setOption({
-                    color: ['#2196f3', '#e91e63'],
+                    color: ['#00E5FF', '#FF1744'],
                     tooltip: { trigger: 'axis' },
                     legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
                     grid: { left: 40, right: 15, top: 15, bottom: 35, containLabel: true },
@@ -2009,7 +2040,7 @@
                     series: [{
                         type: 'bar',
                         barMaxWidth: 28,
-                        itemStyle: { borderRadius: [6, 6, 0, 0], color: (p) => ['#4caf50', '#8bc34a', '#ffeb3b', '#ff9800', '#f44336', '#9c27b0'][p.dataIndex % 6] },
+                        itemStyle: { borderRadius: [6, 6, 0, 0], color: (p) => ['#00E676', '#C6FF00', '#FFEA00', '#FF9100', '#FF1744', '#651FFF'][p.dataIndex % 6] },
                         data: labels.map(k => faixasPeso[k])
                     }]
                 }, { notMerge: true });
@@ -2017,7 +2048,7 @@
 
             // 8) CIDs (ranking)
             const cidEntries = aplicarTop(sortedEntries(contar(r => r.cidPrincipal?.codigo || r.cid_principal_codigo)), 'chartCID');
-            barH('chartCID', cidEntries, { color: '#9c27b0' });
+            barH('chartCID', cidEntries, { color: '#D500F9' });
 
             // 9) Hospitais (ranking)
             const hospEntries = aplicarTop(sortedEntries(contar(r => r.hospital?.nome || r.hospital_nome || 'Desconhecido')), 'chartHospital');
@@ -2168,6 +2199,86 @@
                             label: { color: '#333', fontSize: 11, formatter: (p) => (p.name && p.name.length > 44 ? p.name.slice(0, 44) + '...' : p.name) }
                         }]
                     }, { notMerge: true });
+
+                    // Pan com Ctrl (move o grafico inteiro)
+                    if (!sankeyPanHandlersAttached) {
+                        sankeyPanHandlersAttached = true;
+                        const el = document.getElementById('chartSankey');
+                        if (el) {
+                            let isPanning = false;
+                            let startX = 0;
+                            let startY = 0;
+                            el.addEventListener('mousedown', (ev) => {
+                                if (!ev.ctrlKey) return;
+                                isPanning = true;
+                                startX = ev.clientX;
+                                startY = ev.clientY;
+                                ev.preventDefault();
+                            });
+                            window.addEventListener('mousemove', (ev) => {
+                                if (!isPanning) return;
+                                const dx = ev.clientX - startX;
+                                const dy = ev.clientY - startY;
+                                sankeyTransform.x += dx;
+                                sankeyTransform.y += dy;
+                                startX = ev.clientX;
+                                startY = ev.clientY;
+                                el.style.transform = `translate(${sankeyTransform.x}px, ${sankeyTransform.y}px)`;
+                            });
+                            window.addEventListener('mouseup', () => {
+                                isPanning = false;
+                            });
+                        }
+                    }
+
+                    // Interacoes: duplo clique foca fluxo do no (toggle)
+                    if (!chartSankey.__flowHandlersAttached) {
+                        chartSankey.__flowHandlersAttached = true;
+                        chartSankey.__flowFocusNode = null;
+                        chartSankey.__flowAll = { nodes, links };
+
+                        const focusFluxo = (nodeName) => {
+                            const allLinks = chartSankey.__flowAll.links || [];
+                            const allNodes = chartSankey.__flowAll.nodes || [];
+                            const adj = new Map();
+                            allLinks.forEach(l => {
+                                if (!adj.has(l.source)) adj.set(l.source, new Set());
+                                if (!adj.has(l.target)) adj.set(l.target, new Set());
+                                adj.get(l.source).add(l.target);
+                                adj.get(l.target).add(l.source);
+                            });
+                            const visited = new Set([nodeName]);
+                            const queue = [nodeName];
+                            while (queue.length) {
+                                const n = queue.shift();
+                                const next = adj.get(n);
+                                if (!next) continue;
+                                for (const t of next) {
+                                    if (!visited.has(t)) {
+                                        visited.add(t);
+                                        queue.push(t);
+                                    }
+                                }
+                            }
+                            const filteredLinks = allLinks.filter(l => visited.has(l.source) && visited.has(l.target));
+                            const filteredNodes = allNodes.filter(n => visited.has(n.name));
+                            chartSankey.setOption({ series: [{ data: filteredNodes, links: filteredLinks }] }, { notMerge: true });
+                        };
+
+                        chartSankey.on('dblclick', (params) => {
+                            if (!params || params.dataType !== 'node') return;
+                            const name = params.name;
+                            if (chartSankey.__flowFocusNode === name) {
+                                chartSankey.__flowFocusNode = null;
+                                chartSankey.setOption({ series: [{ data: chartSankey.__flowAll.nodes, links: chartSankey.__flowAll.links }] }, { notMerge: true });
+                            } else {
+                                chartSankey.__flowFocusNode = name;
+                                focusFluxo(name);
+                            }
+                        });
+                    } else {
+                        chartSankey.__flowAll = { nodes, links };
+                    }
                 } catch (e) {
                     noData(chartSankey, 'Erro no Sankey');
                 }
@@ -2222,7 +2333,7 @@
                 try {
                     if (!mesesInd.length) noData(chartInd);
                     else chartInd.setOption({
-                        color: ['#f44336', '#03a9f4', '#ff9800', '#9c27b0'],
+                        color: ['#00E676', '#00E5FF', '#FF9100', '#FF1744'],
                         tooltip: { trigger: 'axis', valueFormatter: (v) => `${v}%` },
                         legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
                         grid: { left: 40, right: 15, top: 15, bottom: 35, containLabel: true },
@@ -2309,34 +2420,108 @@
                 }, { notMerge: true });
             }
 
-            // 15) Scatter (peso x permanencia real)
-            const pontos = [];
+            // 15) Scatter (peso x permanencia real) - por especialidade
+            const espAgg = {};
             dados.forEach(r => {
+                const esp = r.medico_responsavel_especialidade || r.medico?.[0]?.especialidade || 'Sem Especialidade';
                 const peso = num(r.drgBrasilRefinado?.peso ?? r.drg_peso);
                 const perm = num(r.permanenciaReal);
-                if (peso === null || perm === null) return;
-                pontos.push([peso, perm]);
+                const prev = num(r.permanenciaPrevistaNaInternacao);
+                if (!espAgg[esp]) espAgg[esp] = { pesoS: 0, pesoN: 0, permS: 0, permN: 0, prevS: 0, prevN: 0, n: 0 };
+                const a = espAgg[esp];
+                if (peso !== null) { a.pesoS += peso; a.pesoN += 1; }
+                if (perm !== null) { a.permS += perm; a.permN += 1; }
+                if (prev !== null) { a.prevS += prev; a.prevN += 1; }
+                a.n += 1;
+            });
+
+            const pontos = [];
+            const statusFromAgg = (a) => {
+                if (!a || !a.permN || !a.prevN) return 'Sem Dados';
+                const realMedio = a.permS / a.permN;
+                const prevMedio = a.prevS / a.prevN;
+                if (realMedio <= prevMedio) return 'Ideal';
+                const diff = realMedio - prevMedio;
+                const limite = Math.max(1, prevMedio * 0.1);
+                return diff <= limite ? 'Proximo do ideal' : 'Acima';
+            };
+
+            Object.entries(espAgg).forEach(([esp, a]) => {
+                if (!a.pesoN || !a.permN) return;
+                const pesoMedio = a.pesoS / a.pesoN;
+                const permMedio = a.permS / a.permN;
+                pontos.push({
+                    value: [Number(pesoMedio.toFixed(3)), Number(permMedio.toFixed(2)), a.n, esp],
+                    status: statusFromAgg(a)
+                });
             });
             const chartScatter = init('chartScatter');
             if (chartScatter) {
                 try {
                     if (!pontos.length) noData(chartScatter);
                     else {
-                        const maxPontos = 7000;
+                        const maxPontos = 500;
                         const passo = pontos.length > maxPontos ? Math.ceil(pontos.length / maxPontos) : 1;
                         const amostra = passo === 1 ? pontos : pontos.filter((_, i) => i % passo === 0);
+                        const maxN = Math.max(...amostra.map(p => p.value[2] || 1), 1);
+                        const sizeFor = (n) => {
+                            const k = Math.sqrt(n / maxN);
+                            return 8 + k * 28;
+                        };
                         chartScatter.setOption({
-                            color: ['#2196f3'],
-                            tooltip: { trigger: 'item', formatter: (p) => `Peso DRG: <b>${p.value[0]}</b><br/>Permanencia Real: <b>${p.value[1]}</b>` },
+                            color: ['#4caf50', '#ff9800', '#f44336', '#9e9e9e'],
+                            legend: {
+                                bottom: 0,
+                                left: 'center',
+                                data: ['Ideal', 'Proximo do ideal', 'Acima', 'Sem Dados'],
+                                textStyle: { fontSize: 11 }
+                            },
+                            tooltip: {
+                                trigger: 'item',
+                                formatter: (p) => {
+                                    const v = p.value || [];
+                                    const nome = v[3] ? `<br/>Especialidade: <b>${v[3]}</b>` : '';
+                                    return `Status: <b>${p.seriesName}</b>${nome}<br/>Peso medio: <b>${v[0]}</b><br/>Permanencia media: <b>${v[1]}</b><br/>Casos: <b>${v[2]}</b>`;
+                                }
+                            },
                             grid: { left: 50, right: 15, top: 10, bottom: 35, containLabel: true },
-                            xAxis: { type: 'value', name: 'Peso DRG', nameLocation: 'middle', nameGap: 25, axisLabel: { color: '#666' } },
-                            yAxis: { type: 'value', name: 'Permanencia Real', nameLocation: 'middle', nameGap: 35, axisLabel: { color: '#666' } },
+                            xAxis: { type: 'value', name: 'Peso medio DRG', nameLocation: 'middle', nameGap: 25, axisLabel: { color: '#666' } },
+                            yAxis: { type: 'value', name: 'Permanencia media', nameLocation: 'middle', nameGap: 35, axisLabel: { color: '#666' } },
                             dataZoom: [
                                 { type: 'inside', xAxisIndex: 0 },
                                 { type: 'inside', yAxisIndex: 0 },
                                 { type: 'slider', xAxisIndex: 0, height: 12, bottom: 8 }
                             ],
-                            series: [{ type: 'scatter', data: amostra, symbolSize: 6, itemStyle: { opacity: 0.6 } }]
+                            series: [
+                                {
+                                    name: 'Ideal',
+                                    type: 'scatter',
+                                    data: amostra.filter(p => p.status === 'Ideal').map(p => p.value),
+                                    symbolSize: (val) => sizeFor(val[2] || 1),
+                                    itemStyle: { opacity: 0.7 }
+                                },
+                                {
+                                    name: 'Proximo do ideal',
+                                    type: 'scatter',
+                                    data: amostra.filter(p => p.status === 'Proximo do ideal').map(p => p.value),
+                                    symbolSize: (val) => sizeFor(val[2] || 1),
+                                    itemStyle: { opacity: 0.7 }
+                                },
+                                {
+                                    name: 'Acima',
+                                    type: 'scatter',
+                                    data: amostra.filter(p => p.status === 'Acima').map(p => p.value),
+                                    symbolSize: (val) => sizeFor(val[2] || 1),
+                                    itemStyle: { opacity: 0.7 }
+                                },
+                                {
+                                    name: 'Sem Dados',
+                                    type: 'scatter',
+                                    data: amostra.filter(p => p.status === 'Sem Dados').map(p => p.value),
+                                    symbolSize: (val) => sizeFor(val[2] || 1),
+                                    itemStyle: { opacity: 0.5 }
+                                }
+                            ]
                         }, { notMerge: true });
                     }
                 } catch (e) {
