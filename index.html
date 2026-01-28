@@ -1909,7 +1909,7 @@
                     },
                     grid: { left: 10, right: 26, top: 10, bottom: 10, containLabel: true },
                     xAxis: { type: 'value', axisLabel: { color: '#666' } },
-                    yAxis: { type: 'category', data: labels, axisLabel: { color: '#666', formatter: (v) => trunc(v, truncMax) } },
+                    yAxis: { type: 'category', data: labels, axisLabel: { color: '#666', formatter: (v) => trunc(v, truncMax) }, inverse: true },
                     dataZoom: zoomY(labels.length),
                     series: [{ type: 'bar', barMaxWidth: 18, itemStyle: { borderRadius: [0, 6, 6, 0] }, data: values }]
                 }, { notMerge: true });
