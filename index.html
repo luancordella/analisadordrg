@@ -1,0 +1,2483 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard DRG Brasil</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 { font-size: 22px; font-weight: 600; }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 280px;
+        }
+
+        .header-info {
+            font-size: 12px;
+            opacity: 0.95;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .header-actions .btn {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+
+        .header-actions .btn:hover {
+            background: rgba(255,255,255,0.22);
+        }
+
+        #slideIndicator {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.22);
+            font-size: 11px;
+            letter-spacing: 0.3px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        /* Secao de Filtros */
+        .filters-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filters-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+        }
+
+        .filter-group select[multiple] {
+            min-height: 96px;
+            padding: 6px 8px;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #e91e63;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #eee;
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        /* Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #e91e63;
+        }
+
+        .card-subtitle {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .card.highlight {
+            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            color: white;
+        }
+
+        .card.highlight .card-title,
+        .card.highlight .card-value,
+        .card.highlight .card-subtitle {
+            color: white;
+        }
+
+        .card.warning .card-value { color: #ff9800; }
+        .card.danger .card-value { color: #f44336; }
+        .card.success .card-value { color: #4caf50; }
+        .card.info .card-value { color: #2196f3; }
+
+        /* Graficos */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .chart-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .chart-toolbar .chart-title {
+            margin: 0;
+        }
+
+        .chart-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-actions select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 999px;
+            font-size: 12px;
+            background: white;
+        }
+
+        .chart-action-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 999px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .chart-action-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+        }
+
+        .chart-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .chart-modal.hidden { display: none; }
+
+        .chart-modal-content {
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.96);
+            border-radius: 0;
+            box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .chart-modal-title {
+            font-weight: 700;
+            color: #222;
+            font-size: 13px;
+        }
+
+        .chart-modal-body {
+            flex: 1;
+            min-height: 0;
+        }
+
+        body.modal-open { overflow: hidden; }
+
+        /* Tabela */
+        .table-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .table-title { font-size: 16px; font-weight: 600; }
+
+        .table-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            width: 220px;
+            font-size: 13px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #e91e63;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #eee;
+            cursor: pointer;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th:hover { background: #eee; }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+        }
+
+        tr:hover { background: #fafafa; }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-admissional { background: #e3f2fd; color: #1976d2; }
+        .badge-prorrogacao { background: #fff3e0; color: #f57c00; }
+        .badge-alta { background: #e8f5e9; color: #388e3c; }
+        .badge-autorizacao { background: #f3e5f5; color: #7b1fa2; }
+
+        .peso-alto { color: #f44336; font-weight: 700; }
+        .peso-medio { color: #ff9800; font-weight: 600; }
+        .peso-baixo { color: #4caf50; }
+
+        /* Load Section */
+        .load-section {
+            background: white;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .load-section input[type="file"] { display: none; }
+
+        .load-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .load-btn {
+            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .load-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.4);
+        }
+
+        .load-btn-outline {
+            background: transparent;
+            color: #9c27b0;
+            border: 2px solid #9c27b0;
+        }
+
+        .load-btn-outline:hover {
+            background: rgba(156, 39, 176, 0.08);
+            box-shadow: none;
+        }
+
+        .hidden { display: none; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .pagination button {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .pagination button:hover { background: #f5f5f5; }
+        .pagination button.active {
+            background: #e91e63;
+            color: white;
+            border-color: #e91e63;
+        }
+
+        .pagination span { color: #666; font-size: 12px; }
+
+        /* Export buttons */
+        .export-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Deck / Apresentacao */
+        #deck { }
+        .slide { margin-bottom: 15px; }
+
+        body.presentation-mode {
+            background:
+                radial-gradient(circle at 12% 18%, rgba(233,30,99,0.35), transparent 55%),
+                radial-gradient(circle at 88% 22%, rgba(33,150,243,0.35), transparent 52%),
+                radial-gradient(circle at 40% 88%, rgba(156,39,176,0.35), transparent 60%),
+                #0b0d12;
+            overflow: hidden;
+        }
+
+        body.presentation-mode .header {
+            background: rgba(10, 12, 18, 0.55);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(16px);
+        }
+
+        body.presentation-mode .container {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        body.presentation-mode #deck {
+            height: calc(100vh - 76px);
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+            padding: 18px 18px 40px;
+        }
+
+        body.presentation-mode .slide {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        body.presentation-mode .slide {
+            opacity: 0.88;
+            transform: translateY(10px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        body.presentation-mode .slide.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        body.presentation-mode .filters-section,
+        body.presentation-mode .chart-container,
+        body.presentation-mode .table-section,
+        body.presentation-mode .card {
+            background: rgba(255,255,255,0.88);
+            border: 1px solid rgba(255,255,255,0.55);
+            backdrop-filter: blur(14px);
+        }
+
+        body.presentation-mode .chart-container,
+        body.presentation-mode .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        body.presentation-mode .chart-container:hover,
+        body.presentation-mode .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .filters-grid { grid-template-columns: 1fr 1fr; }
+            .cards { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>Dashboard DRG Brasil</h1>
+            <div class="header-info">
+                <span id="lastUpdate">Carregue os dados para iniciar</span>
+                <span id="slideIndicator" class="hidden"></span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="btn btn-secondary" onclick="abrirSeletorJson()">Carregar JSON</button>
+            <button type="button" class="btn btn-secondary" onclick="togglePresentation()">Modo Apresentacao</button>
+            <button type="button" class="btn btn-secondary" onclick="toggleFullscreen()">Tela Cheia</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Load Section -->
+        <div id="loadSection" class="load-section">
+            <input type="file" id="fileInput" accept=".json">
+            <div class="load-actions">
+                <label for="fileInput" class="load-btn">Selecionar arquivo JSON</label>
+            </div>
+            <p style="margin-top: 15px; color: #666;">Selecione o JSON exportado pelo Python (ex.: <b>dados_drg_latest.json</b>).</p>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboardContent" class="hidden">
+            <div id="deck">
+
+                <section class="slide">
+                    <!-- Filtros -->
+                    <div class="filters-section">
+                <div class="filters-header">
+                    <div class="filters-title">Filtros</div>
+                    <div>
+                        <span id="filteredCount" style="color: #666; margin-right: 15px;"></span>
+                    </div>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Periodo Inicio</label>
+                        <input type="date" id="filterDataInicio">
+                    </div>
+                    <div class="filter-group">
+                        <label>Periodo Fim</label>
+                        <input type="date" id="filterDataFim">
+                    </div>
+                    <div class="filter-group">
+                        <label>Situacao</label>
+                        <select id="filterSituacao">
+                            <option value="">Todas</option>
+                            <option value="1">Admissional</option>
+                            <option value="2">Prorrogacao</option>
+                            <option value="3">Alta</option>
+                            <option value="4">Autorizacao</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Hospital</label>
+                        <select id="filterHospital">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>MDC (Categoria)</label>
+                        <select id="filterMDC">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Especialidade</label>
+                        <select id="filterEspecialidade" multiple>
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Falha Estrutura</label>
+                        <select id="filterFalhaEstrutura" multiple>
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Sexo</label>
+                        <select id="filterSexo">
+                            <option value="">Todos</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Feminino</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Faixa Etaria</label>
+                        <select id="filterIdade">
+                            <option value="">Todas</option>
+                            <option value="0-17">0-17 anos</option>
+                            <option value="18-40">18-40 anos</option>
+                            <option value="41-60">41-60 anos</option>
+                            <option value="61-80">61-80 anos</option>
+                            <option value="80+">80+ anos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Peso DRG</label>
+                        <select id="filterPeso">
+                            <option value="">Todos</option>
+                            <option value="baixo">Baixo (< 1.0)</option>
+                            <option value="medio">Medio (1.0 - 2.0)</option>
+                            <option value="alto">Alto (> 2.0)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Idoso Fragil</label>
+                        <select id="filterIdosoFragil">
+                            <option value="">Todos</option>
+                            <option value="S">Sim</option>
+                            <option value="N">Nao</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Condicao Grave</label>
+                        <select id="filterCondicaoGrave">
+                            <option value="">Todos</option>
+                            <option value="S">Sim</option>
+                            <option value="N">Nao</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Ventilacao Mecanica</label>
+                        <select id="filterVentilacao">
+                            <option value="">Todos</option>
+                            <option value="S">Sim</option>
+                            <option value="N">Nao</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>CID Principal</label>
+                        <input type="text" id="filterCID" placeholder="Ex: O80, A15...">
+                    </div>
+                    <div class="filter-group">
+                        <label>DRG</label>
+                        <input type="text" id="filterDRG" placeholder="Ex: 792, 792.4...">
+                    </div>
+                    <div class="filter-group">
+                        <label>Condicao de Alta</label>
+                        <select id="filterCondicaoAlta">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Estado</label>
+                        <select id="filterEstado">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Cidade</label>
+                        <input type="text" id="filterCidade" placeholder="Ex: SAO PAULO">
+                    </div>
+                    <div class="filter-group">
+                        <label>Plano</label>
+                        <select id="filterPlano">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Itens por Pagina</label>
+                        <select id="configItensPorPagina">
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="buttons-row">
+                    <button class="btn btn-primary" onclick="aplicarFiltros()">Aplicar Filtros</button>
+                    <button class="btn btn-secondary" onclick="limparFiltros()">Limpar Filtros</button>
+                    <button class="btn btn-secondary export-btn" onclick="exportarCSV()">Exportar CSV</button>
+                </div>
+                    </div>
+                </section>
+
+                <section class="slide">
+                    <!-- Cards KPIs -->
+                    <div class="cards">
+                <div class="card highlight">
+                    <div class="card-title">Total Internacoes</div>
+                    <div class="card-value" id="kpiTotal">0</div>
+                    <div class="card-subtitle">registros</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Permanencia Media</div>
+                    <div class="card-value" id="kpiPermanencia">0</div>
+                    <div class="card-subtitle">dias</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Peso Medio DRG</div>
+                    <div class="card-value" id="kpiPeso">0</div>
+                    <div class="card-subtitle">peso relativo</div>
+                </div>
+                <div class="card info">
+                    <div class="card-title">Em Internacao</div>
+                    <div class="card-value" id="kpiAdmissional">0</div>
+                    <div class="card-subtitle">admissional</div>
+                </div>
+                <div class="card success">
+                    <div class="card-title">Altas</div>
+                    <div class="card-value" id="kpiAltas">0</div>
+                    <div class="card-subtitle">no periodo</div>
+                </div>
+                <div class="card warning">
+                    <div class="card-title">Idosos Frageis</div>
+                    <div class="card-value" id="kpiIdosos">0</div>
+                    <div class="card-subtitle">pacientes</div>
+                </div>
+                <div class="card danger">
+                    <div class="card-title">Condicao Grave</div>
+                    <div class="card-value" id="kpiGraves">0</div>
+                    <div class="card-subtitle">casos</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Ventilacao Mec.</div>
+                    <div class="card-value" id="kpiVentilacao">0</div>
+                    <div class="card-subtitle">pacientes</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Reinternacoes</div>
+                    <div class="card-value" id="kpiReinternacao">0</div>
+                    <div class="card-subtitle">casos</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Perm. Prevista</div>
+                    <div class="card-value" id="kpiPrevista">0</div>
+                    <div class="card-subtitle">dias</div>
+                </div>
+                    </div>
+                </section>
+
+                <section class="slide">
+                    <!-- Graficos Linha 1 -->
+                    <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Internacoes por Mes</div>
+                    <div class="chart-wrapper"><div id="chartMes" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Distribuicao por Situacao</div>
+                    <div class="chart-wrapper"><div id="chartSituacao" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">DRGs (Ranking)</div>
+                    <div class="chart-wrapper"><div id="chartDRG" style="width:100%;height:100%;"></div></div>
+                </div>
+                    </div>
+                </section>
+
+                <section class="slide">
+                    <!-- Graficos Linha 2 -->
+                    <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Distribuicao por MDC</div>
+                    <div class="chart-wrapper"><div id="chartMDC" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Sexo e Faixa Etaria</div>
+                    <div class="chart-wrapper"><div id="chartIdade" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Permanencia Real vs Prevista</div>
+                    <div class="chart-wrapper"><div id="chartPermanencia" style="width:100%;height:100%;"></div></div>
+                </div>
+                    </div>
+                </section>
+
+                <section class="slide">
+                    <!-- Graficos Linha 3 -->
+                    <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Distribuicao de Peso DRG</div>
+                    <div class="chart-wrapper"><div id="chartPesoDist" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">CIDs Principais (Ranking)</div>
+                    <div class="chart-wrapper"><div id="chartCID" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Internacoes por Hospital</div>
+                    <div class="chart-wrapper"><div id="chartHospital" style="width:100%;height:100%;"></div></div>
+                </div>
+                    </div>
+                </section>
+
+                <section class="slide">
+                    <!-- Graficos Linha 4 (novos) -->
+                    <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Sankey (Especialidade -> DRG -> Falha -> Peso -> Permanencia)</div>
+                    <div class="chart-wrapper" style="height: 360px;"><div id="chartSankey" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">CMI (Peso Medio) por Mes</div>
+                    <div class="chart-wrapper"><div id="chartCMI" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Indicadores por Mes (taxas)</div>
+                    <div class="chart-wrapper"><div id="chartIndicadores" style="width:100%;height:100%;"></div></div>
+                </div>
+                    </div>
+                </section>
+
+                <section class="slide">
+                    <!-- Graficos Falhas -->
+                    <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Falhas por Mes (Registros)</div>
+                    <div class="chart-wrapper" style="height: 320px;"><div id="chartFalhaMes" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Especialidades com Falha (Top)</div>
+                    <div class="chart-wrapper" style="height: 320px;"><div id="chartFalhaEspecialidade" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Origem das Falhas</div>
+                    <div class="chart-wrapper" style="height: 320px;"><div id="chartFalhaOrigem" style="width:100%;height:100%;"></div></div>
+                </div>
+                    </div>
+                </section>
+
+                <section class="slide">
+                    <!-- Graficos Linha 5 (novos) -->
+                    <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Falhas de Estrutura e Processo (Top)</div>
+                    <div class="chart-wrapper" style="height: 320px;"><div id="chartFalhaEstrutura" style="width:100%;height:100%;"></div></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Peso DRG x Permanencia Real (scatter)</div>
+                    <div class="chart-wrapper" style="height: 320px;"><div id="chartScatter" style="width:100%;height:100%;"></div></div>
+                </div>
+                    </div>
+                </section>
+
+                <section class="slide">
+                    <!-- Tabela -->
+                    <div class="table-section">
+                <div class="table-header">
+                    <div class="table-title">Lista de Internacoes</div>
+                    <div class="table-controls">
+                        <input type="text" class="search-box" id="searchBox" placeholder="Buscar na tabela...">
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">ID</th>
+                                <th onclick="sortTable(1)">Situacao</th>
+                                <th onclick="sortTable(2)">Data Int.</th>
+                                <th onclick="sortTable(3)">Data Alta</th>
+                                <th onclick="sortTable(4)">Hospital</th>
+                                <th onclick="sortTable(5)">Sexo</th>
+                                <th onclick="sortTable(6)">Idade</th>
+                                <th onclick="sortTable(7)">CID</th>
+                                <th onclick="sortTable(8)">DRG</th>
+                                <th onclick="sortTable(9)">Peso</th>
+                                <th onclick="sortTable(10)">Perm.Real</th>
+                                <th onclick="sortTable(11)">Perm.Prev</th>
+                                <th onclick="sortTable(12)">MDC</th>
+                                <th onclick="sortTable(13)">Idoso</th>
+                                <th onclick="sortTable(14)">Grave</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variaveis globais
+        let dadosOriginais = [];
+        let dadosFiltrados = [];
+        let paginaAtual = 1;
+        let itensPorPagina = 50;
+        let charts = {};
+
+        // Mapeamentos
+        const situacoes = { '1': 'Admissional', '2': 'Prorrogacao', '3': 'Alta', '4': 'Autorizacao' };
+        const badgeClass = { '1': 'badge-admissional', '2': 'badge-prorrogacao', '3': 'badge-alta', '4': 'badge-autorizacao' };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            rebuildDeck();
+            montarToolbars();
+            if (deckEl) {
+                deckEl.addEventListener('scroll', () => {
+                    if (!document.body.classList.contains('presentation-mode')) return;
+                    if (deckScrollRaf) return;
+                    deckScrollRaf = requestAnimationFrame(() => {
+                        deckScrollRaf = null;
+                        const top = deckEl.scrollTop;
+                        let best = 0;
+                        let bestDist = Infinity;
+                        slides.forEach((s, i) => {
+                            const dist = Math.abs(s.offsetTop - top);
+                            if (dist < bestDist) {
+                                bestDist = dist;
+                                best = i;
+                            }
+                        });
+                        slideIndex = best;
+                        atualizarSlideIndicator();
+                    });
+                }, { passive: true });
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            Object.values(charts).forEach(c => {
+                try { c.resize(); } catch (e) {}
+            });
+        });
+
+        document.getElementById('configItensPorPagina').addEventListener('change', (e) => {
+            const v = parseInt(e.target.value, 10);
+            itensPorPagina = Number.isFinite(v) && v > 0 ? v : 50;
+            paginaAtual = 1;
+            atualizarTabela();
+        });
+
+        // ============================
+        // Controles por grafico (Top + Tela Cheia)
+        // ============================
+        const TOP_OPTIONS = [
+            { value: '3', label: 'Top 3' },
+            { value: '5', label: 'Top 5' },
+            { value: '10', label: 'Top 10' },
+            { value: '25', label: 'Top 25' },
+            { value: '50', label: 'Top 50' },
+            { value: '100', label: 'Top 100' },
+            { value: 'all', label: 'Todos' }
+        ];
+
+        const CHART_TOP_DEFAULTS = {
+            chartDRG: '10',
+            chartMDC: '10',
+            chartCID: '10',
+            chartHospital: '10',
+            chartSankey: '10',
+            chartFalhaEstrutura: '10',
+            chartFalhaEspecialidade: '10'
+        };
+
+        let chartTop = {};
+        const chartTitles = {};
+        let chartModalEl = null;
+        let chartModalInstance = null;
+        let sankeyPrefs = { topCausas: '10' };
+
+        function loadChartPrefs() {
+            try {
+                const raw = localStorage.getItem('drgDash_chartTop');
+                if (!raw) return;
+                const obj = JSON.parse(raw);
+                if (obj && typeof obj === 'object') chartTop = obj;
+            } catch (e) {}
+        }
+
+        function saveChartPrefs() {
+            try { localStorage.setItem('drgDash_chartTop', JSON.stringify(chartTop)); } catch (e) {}
+        }
+
+        function loadSankeyPrefs() {
+            try {
+                const raw = localStorage.getItem('drgDash_sankeyPrefs');
+                if (!raw) return;
+                const obj = JSON.parse(raw);
+                if (obj && typeof obj === 'object') sankeyPrefs = { ...sankeyPrefs, ...obj };
+            } catch (e) {}
+        }
+
+        function saveSankeyPrefs() {
+            try { localStorage.setItem('drgDash_sankeyPrefs', JSON.stringify(sankeyPrefs)); } catch (e) {}
+        }
+
+        function getChartTopValue(id) {
+            return chartTop[id] || CHART_TOP_DEFAULTS[id] || '10';
+        }
+
+        function setChartTopValue(id, value) {
+            chartTop[id] = value;
+            saveChartPrefs();
+        }
+
+        function getSankeyCausaTop() {
+            return sankeyPrefs.topCausas || '10';
+        }
+
+        function setSankeyCausaTop(value) {
+            sankeyPrefs.topCausas = value;
+            saveSankeyPrefs();
+        }
+
+        function aplicarTop(entries, chartId) {
+            const val = getChartTopValue(chartId);
+            if (val === 'all') return entries;
+            const n = parseInt(val, 10);
+            if (!Number.isFinite(n) || n <= 0) return entries;
+            return entries.slice(0, n);
+        }
+
+        function ensureChartModal() {
+            if (chartModalEl) return;
+
+            chartModalEl = document.createElement('div');
+            chartModalEl.id = 'chartModal';
+            chartModalEl.className = 'chart-modal hidden';
+            chartModalEl.innerHTML = `
+                <div class="chart-modal-content" role="dialog" aria-modal="true">
+                    <div class="chart-modal-header">
+                        <div id="chartModalTitle" class="chart-modal-title"></div>
+                        <div class="chart-actions">
+                            <button type="button" class="chart-action-btn" id="chartModalCloseBtn">Fechar</button>
+                        </div>
+                    </div>
+                    <div id="chartModalBody" class="chart-modal-body"></div>
+                </div>
+            `;
+            document.body.appendChild(chartModalEl);
+
+            document.getElementById('chartModalCloseBtn').addEventListener('click', fecharChartFullscreen);
+            chartModalEl.addEventListener('click', (e) => {
+                if (e.target === chartModalEl) fecharChartFullscreen();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!chartModalEl || chartModalEl.classList.contains('hidden')) return;
+                if (e.key === 'Escape') fecharChartFullscreen();
+            });
+
+            window.addEventListener('resize', () => {
+                if (chartModalInstance) {
+                    try { chartModalInstance.resize(); } catch (e) {}
+                }
+            });
+        }
+
+        function abrirChartFullscreen(chartId) {
+            if (!window.echarts) return;
+            ensureChartModal();
+            const original = charts[chartId];
+            if (!original) return;
+
+            const title = chartTitles[chartId] || chartId;
+            document.getElementById('chartModalTitle').textContent = title;
+
+            const body = document.getElementById('chartModalBody');
+            body.innerHTML = '';
+            const canvas = document.createElement('div');
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            body.appendChild(canvas);
+
+            if (chartModalInstance) {
+                try { chartModalInstance.dispose(); } catch (e) {}
+                chartModalInstance = null;
+            }
+
+            chartModalEl.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+            try {
+                if (chartModalEl.requestFullscreen) chartModalEl.requestFullscreen();
+            } catch (e) {}
+
+            chartModalInstance = echarts.init(canvas);
+            const option = original.getOption ? original.getOption() : null;
+            if (option) {
+                if (chartId === 'chartSankey' && option.series && option.series[0]) {
+                    option.series[0].label = { ...(option.series[0].label || {}), fontSize: 14 };
+                    option.series[0].nodeGap = Math.max(option.series[0].nodeGap || 14, 18);
+                    option.series[0].nodeWidth = Math.max(option.series[0].nodeWidth || 18, 22);
+                    option.series[0].layoutIterations = Math.max(option.series[0].layoutIterations || 32, 48);
+                }
+                chartModalInstance.setOption(option, { notMerge: true });
+            }
+
+            setTimeout(() => {
+                try { chartModalInstance.resize(); } catch (e) {}
+            }, 50);
+        }
+
+        function fecharChartFullscreen() {
+            if (!chartModalEl) return;
+            chartModalEl.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+            if (document.fullscreenElement) {
+                try { document.exitFullscreen(); } catch (e) {}
+            }
+            if (chartModalInstance) {
+                try { chartModalInstance.dispose(); } catch (e) {}
+                chartModalInstance = null;
+            }
+        }
+
+        function montarToolbars() {
+            loadChartPrefs();
+            loadSankeyPrefs();
+            ensureChartModal();
+
+            document.querySelectorAll('.chart-container').forEach(container => {
+                const chartDiv = container.querySelector('.chart-wrapper > div[id]');
+                const titleEl = container.querySelector('.chart-title');
+                if (!chartDiv || !titleEl) return;
+
+                const chartId = chartDiv.id;
+                chartTitles[chartId] = titleEl.textContent.trim();
+
+                if (container.querySelector('.chart-toolbar')) return;
+
+                const toolbar = document.createElement('div');
+                toolbar.className = 'chart-toolbar';
+
+                const actions = document.createElement('div');
+                actions.className = 'chart-actions';
+
+                const criarSelectTop = (value, onChange) => {
+                    const sel = document.createElement('select');
+                    TOP_OPTIONS.forEach(opt => {
+                        const o = document.createElement('option');
+                        o.value = opt.value;
+                        o.textContent = opt.label;
+                        sel.appendChild(o);
+                    });
+                    sel.value = value;
+                    sel.addEventListener('change', () => {
+                        onChange(sel.value);
+                        atualizarGraficos();
+                    });
+                    return sel;
+                };
+
+                if (chartId === 'chartSankey') {
+                    const lblEsp = document.createElement('span');
+                    lblEsp.textContent = 'Top Esp';
+                    lblEsp.style.fontSize = '11px';
+                    lblEsp.style.color = '#666';
+                    actions.appendChild(lblEsp);
+                    actions.appendChild(criarSelectTop(getChartTopValue(chartId), (v) => setChartTopValue(chartId, v)));
+
+                    const lblCausa = document.createElement('span');
+                    lblCausa.textContent = 'Top Causas';
+                    lblCausa.style.fontSize = '11px';
+                    lblCausa.style.color = '#666';
+                    actions.appendChild(lblCausa);
+                    actions.appendChild(criarSelectTop(getSankeyCausaTop(), (v) => setSankeyCausaTop(v)));
+                } else if (Object.prototype.hasOwnProperty.call(CHART_TOP_DEFAULTS, chartId)) {
+                    actions.appendChild(criarSelectTop(getChartTopValue(chartId), (v) => setChartTopValue(chartId, v)));
+                }
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'chart-action-btn';
+                btn.textContent = 'Tela Cheia';
+                btn.addEventListener('click', () => abrirChartFullscreen(chartId));
+                actions.appendChild(btn);
+
+                toolbar.appendChild(titleEl);
+                toolbar.appendChild(actions);
+                container.insertBefore(toolbar, container.firstChild);
+            });
+        }
+
+        // ============================
+        // Modo Apresentacao (slides)
+        // ============================
+        let deckEl = null;
+        let slides = [];
+        let slideIndex = 0;
+        let deckScrollRaf = null;
+
+        function rebuildDeck() {
+            deckEl = document.getElementById('deck');
+            slides = deckEl ? Array.from(deckEl.querySelectorAll('.slide')) : [];
+            atualizarSlideIndicator();
+        }
+
+        function atualizarSlideIndicator() {
+            const el = document.getElementById('slideIndicator');
+            const ativo = document.body.classList.contains('presentation-mode');
+            if (!el) return;
+            if (!ativo) {
+                el.classList.add('hidden');
+                slides.forEach(s => s.classList.remove('active'));
+                return;
+            }
+            el.classList.remove('hidden');
+            const total = slides.length || 0;
+            const atual = total ? Math.min(total, slideIndex + 1) : 0;
+            el.textContent = total ? `Slide ${atual}/${total}` : 'Slide';
+            slides.forEach((s, i) => s.classList.toggle('active', i === slideIndex));
+        }
+
+        function irParaSlide(idx, suave = true) {
+            if (!deckEl || !slides.length) rebuildDeck();
+            if (!deckEl || !slides.length) return;
+            slideIndex = Math.max(0, Math.min(slides.length - 1, idx));
+            atualizarSlideIndicator();
+            deckEl.scrollTo({ top: slides[slideIndex].offsetTop, behavior: suave ? 'smooth' : 'auto' });
+        }
+
+        function togglePresentation() {
+            const ativar = !document.body.classList.contains('presentation-mode');
+            document.body.classList.toggle('presentation-mode', ativar);
+
+            if (ativar) {
+                rebuildDeck();
+                slideIndex = 0;
+                irParaSlide(0, false);
+            } else {
+                atualizarSlideIndicator();
+            }
+
+            setTimeout(() => {
+                Object.values(charts).forEach(c => {
+                    try { c.resize(); } catch (e) {}
+                });
+            }, 150);
+        }
+
+        async function toggleFullscreen() {
+            try {
+                if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+                else await document.exitFullscreen();
+            } catch (e) {
+                // Ignora falhas (ex.: navegador sem permissao)
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!document.body.classList.contains('presentation-mode')) return;
+            if (chartModalEl && !chartModalEl.classList.contains('hidden')) return;
+            if (!slides.length) rebuildDeck();
+            if (!slides.length) return;
+
+            const key = e.key;
+            if (key === 'ArrowDown' || key === 'PageDown' || key === ' ') {
+                e.preventDefault();
+                irParaSlide(slideIndex + 1);
+            } else if (key === 'ArrowUp' || key === 'PageUp') {
+                e.preventDefault();
+                irParaSlide(slideIndex - 1);
+            } else if (key === 'Home') {
+                e.preventDefault();
+                irParaSlide(0);
+            } else if (key === 'End') {
+                e.preventDefault();
+                irParaSlide(slides.length - 1);
+            } else if (key === 'Escape') {
+                // Sai do modo apresentacao
+                togglePresentation();
+            }
+        });
+
+        function normalizarRegistro(r) {
+            // Novo JSON (flat) gerado pelo drgview.py: usa chaves *_nome, *_codigo, etc.
+            if (r && (r.hospital_nome !== undefined || r.mdc_descricao !== undefined || r.drg_codigo !== undefined)) {
+                const drgCodigo = r.drg_codigo;
+                const drgDescricao = r.drg_descricao;
+                const drgCodigoNome = r.drg_codigo_nome || (drgCodigo && drgDescricao ? `${drgCodigo} - ${drgDescricao}` : (drgCodigo || drgDescricao));
+                return {
+                    id: r.id,
+                    numeroRegistro: r.numeroRegistro,
+                    numeroAtendimento: r.numeroAtendimento,
+                    situacao: r.situacao,
+                    caraterInternacao: r.caraterInternacao,
+                    dataInternacao: r.dataInternacao,
+                    dataAlta: r.dataAlta,
+                    dataPrevistaAlta: r.dataPrevistaAlta,
+                    condicaoAlta: r.condicaoAlta,
+                    permanenciaPrevistaNaInternacao: r.permanenciaPrevistaNaInternacao,
+                    permanenciaPrevistaNaAlta: r.permanenciaPrevistaNaAlta,
+                    permanenciaReal: r.permanenciaReal,
+                    percentil: r.percentil,
+                    acomodacao: r.acomodacao,
+                    leito: r.leito,
+                    procedencia: r.procedencia,
+                    reinternacao: r.reinternacao,
+                    internadoOutrasVezes: r.internadoOutrasVezes,
+                    ventilacaoMecanica: r.ventilacaoMecanica,
+                    condicaoAdquiridaGrave: r.condicao_adquirida_grave,
+                    hospital: {
+                        codigo: r.hospital_codigo,
+                        nome: r.hospital_nome,
+                        cnes: r.hospital_cnes
+                    },
+                    beneficiario: {
+                        codigoPaciente: r.beneficiario_codigo,
+                        plano: r.beneficiario_plano,
+                        sexo: r.beneficiario_sexo,
+                        idadeEmAnos: r.beneficiario_idade_anos,
+                        idadeEmMeses: r.beneficiario_idade_meses,
+                        dataNascimento: r.beneficiario_data_nascimento
+                    },
+                    medico: (r.medico_responsavel_nome || r.medico_responsavel_crm || r.medico_responsavel_especialidade) ? [{
+                        nome: r.medico_responsavel_nome,
+                        crm: r.medico_responsavel_crm,
+                        especialidade: r.medico_responsavel_especialidade,
+                        medicoResponsavel: 'S'
+                    }] : [],
+                    cidPrincipal: {
+                        codigo: r.cid_principal_codigo,
+                        descricao: r.cid_principal_descricao
+                    },
+                    drgBrasilRefinado: {
+                        codigo: drgCodigo,
+                        descricao: drgDescricao,
+                        tipo: r.drg_tipo,
+                        peso: r.drg_peso,
+                        mdc: {
+                            codigo: r.mdc_codigo,
+                            descricao: r.mdc_descricao
+                        }
+                    },
+                    variaveis: {
+                        idosoFragil: r.idoso_fragil,
+                        caGrave: r.ca_grave
+                    },
+                    estado: r.estado,
+                    cidade: r.cidade,
+                    dataCadastro: r.data_cadastro,
+                    dataUltimaAlteracao: r.data_ultima_alteracao,
+                    medico_responsavel_especialidade: r.medico_responsavel_especialidade,
+                    medico_especialidades: Array.isArray(r.medico_especialidades) ? r.medico_especialidades : (r.medico_responsavel_especialidade ? [r.medico_responsavel_especialidade] : []),
+                    drg_codigo_nome: drgCodigoNome,
+                    falha_estrutura_principal: r.falha_estrutura_principal,
+                    falha_estrutura_descricoes: Array.isArray(r.falha_estrutura_descricoes) ? r.falha_estrutura_descricoes : [],
+                    falha_estrutura_origens: Array.isArray(r.falha_estrutura_origens) ? r.falha_estrutura_origens : [],
+                    falha_estrutura_qtd: r.falha_estrutura_qtd,
+                    falha_estrutura_itens: Array.isArray(r.falha_estrutura_itens) ? r.falha_estrutura_itens : [],
+                    permanencia_status: r.permanencia_status
+                };
+            }
+
+            return r;
+        }
+
+        function abrirSeletorJson() {
+            const input = document.getElementById('fileInput');
+            if (input) input.click();
+        }
+
+        // Carregar arquivo
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    inicializarDashboard(json);
+                } catch (err) {
+                    alert('Erro ao ler JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function inicializarDashboard(json) {
+            // Extrair dados
+            let registros = [];
+            if (json.itens) {
+                if (Array.isArray(json.itens) && json.itens[0] && json.itens[0].items) {
+                    registros = json.itens[0].items;
+                } else if (Array.isArray(json.itens)) {
+                    registros = json.itens;
+                }
+            }
+
+            registros = registros.map(normalizarRegistro);
+            dadosOriginais = registros;
+            dadosFiltrados = [...registros];
+
+            // Atualizar UI
+            document.getElementById('loadSection').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('hidden');
+            document.getElementById('lastUpdate').textContent =
+                `${registros.length} registros | Exportado: ${json.exportacao || 'N/A'}`;
+            rebuildDeck();
+
+            // Popular filtros
+            popularFiltros(registros, json.dimensoes);
+
+            // Definir datas padrao
+            definirDatasPadrao(registros);
+
+            // Renderizar
+            aplicarFiltros();
+        }
+
+        function popularFiltros(registros, dimensoes) {
+            const resetMulti = (sel) => {
+                if (!sel) return;
+                Array.from(sel.options).forEach(o => { o.selected = false; });
+                if (sel.options.length) sel.options[0].selected = true;
+            };
+            // Hospitais
+            const selHospital = document.getElementById('filterHospital');
+            selHospital.innerHTML = '<option value="">Todos</option>';
+            const hospitais = (dimensoes && Array.isArray(dimensoes.hospital_nome) && dimensoes.hospital_nome.length)
+                ? dimensoes.hospital_nome
+                : [...new Set(registros.map(r => r.hospital?.nome).filter(Boolean))].sort();
+            hospitais.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h;
+                opt.textContent = h.length > 40 ? h.substring(0, 40) + '...' : h;
+                selHospital.appendChild(opt);
+            });
+
+            // MDCs
+            const selMDC = document.getElementById('filterMDC');
+            selMDC.innerHTML = '<option value="">Todos</option>';
+            const mdcs = (dimensoes && Array.isArray(dimensoes.mdc_descricao) && dimensoes.mdc_descricao.length)
+                ? dimensoes.mdc_descricao
+                : [...new Set(registros.map(r => r.drgBrasilRefinado?.mdc?.descricao).filter(Boolean))].sort();
+            mdcs.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m.length > 35 ? m.substring(0, 35) + '...' : m;
+                selMDC.appendChild(opt);
+            });
+
+            // Especialidades
+            const selEsp = document.getElementById('filterEspecialidade');
+            selEsp.innerHTML = '<option value="">Todas</option>';
+            const especialidades = (dimensoes && Array.isArray(dimensoes.medico_responsavel_especialidade) && dimensoes.medico_responsavel_especialidade.length)
+                ? dimensoes.medico_responsavel_especialidade
+                : [...new Set(registros.map(r => r.medico_responsavel_especialidade || r.medico?.[0]?.especialidade).filter(Boolean))].sort();
+            especialidades.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e;
+                opt.textContent = e.length > 35 ? e.substring(0, 35) + '...' : e;
+                selEsp.appendChild(opt);
+            });
+            resetMulti(selEsp);
+
+            // Falhas de Estrutura/Processo
+            const selFalha = document.getElementById('filterFalhaEstrutura');
+            selFalha.innerHTML = '<option value="">Todas</option>';
+            const falhas = (dimensoes && Array.isArray(dimensoes.falha_estrutura_principal) && dimensoes.falha_estrutura_principal.length)
+                ? dimensoes.falha_estrutura_principal
+                : [...new Set(registros.flatMap(r => {
+                    if (Array.isArray(r.falha_estrutura_descricoes)) return r.falha_estrutura_descricoes;
+                    if (Array.isArray(r.causaExterna)) return r.causaExterna.map(c => c?.descricao).filter(Boolean);
+                    return [];
+                }).filter(Boolean))].sort();
+            falhas.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f.length > 38 ? f.substring(0, 38) + '...' : f;
+                selFalha.appendChild(opt);
+            });
+            resetMulti(selFalha);
+
+            // Estados
+            const selEstado = document.getElementById('filterEstado');
+            selEstado.innerHTML = '<option value="">Todos</option>';
+            const estados = (dimensoes && Array.isArray(dimensoes.estado) && dimensoes.estado.length)
+                ? dimensoes.estado
+                : [...new Set(registros.map(r => r.estado).filter(Boolean))].sort();
+            estados.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e;
+                opt.textContent = e;
+                selEstado.appendChild(opt);
+            });
+
+            // Planos
+            const selPlano = document.getElementById('filterPlano');
+            selPlano.innerHTML = '<option value="">Todos</option>';
+            const planos = (dimensoes && Array.isArray(dimensoes.beneficiario_plano) && dimensoes.beneficiario_plano.length)
+                ? dimensoes.beneficiario_plano
+                : [...new Set(registros.map(r => r.beneficiario?.plano).filter(Boolean))].sort();
+            planos.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p.length > 35 ? p.substring(0, 35) + '...' : p;
+                selPlano.appendChild(opt);
+            });
+
+            // Condicao de alta
+            const selCond = document.getElementById('filterCondicaoAlta');
+            selCond.innerHTML = '<option value="">Todas</option>';
+            const conds = [...new Set(registros.map(r => r.condicaoAlta).filter(Boolean))].sort();
+            conds.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                selCond.appendChild(opt);
+            });
+        }
+
+        function definirDatasPadrao(registros) {
+            const datas = registros.map(r => r.dataInternacao?.split(' ')[0]).filter(Boolean).sort();
+            if (datas.length > 0) {
+                document.getElementById('filterDataInicio').value = datas[0];
+                document.getElementById('filterDataFim').value = datas[datas.length - 1];
+            }
+        }
+
+        function aplicarFiltros() {
+            const multiValores = (id) => {
+                const sel = document.getElementById(id);
+                if (!sel) return [];
+                return Array.from(sel.selectedOptions).map(o => o.value).filter(Boolean);
+            };
+            const filtros = {
+                dataInicio: document.getElementById('filterDataInicio').value,
+                dataFim: document.getElementById('filterDataFim').value,
+                situacao: document.getElementById('filterSituacao').value,
+                hospital: document.getElementById('filterHospital').value,
+                mdc: document.getElementById('filterMDC').value,
+                especialidade: multiValores('filterEspecialidade'),
+                falhaEstrutura: multiValores('filterFalhaEstrutura'),
+                sexo: document.getElementById('filterSexo').value,
+                idade: document.getElementById('filterIdade').value,
+                peso: document.getElementById('filterPeso').value,
+                idosoFragil: document.getElementById('filterIdosoFragil').value,
+                condicaoGrave: document.getElementById('filterCondicaoGrave').value,
+                ventilacao: document.getElementById('filterVentilacao').value,
+                cid: document.getElementById('filterCID').value.toUpperCase().trim(),
+                drg: document.getElementById('filterDRG').value.toUpperCase().trim(),
+                condicaoAlta: document.getElementById('filterCondicaoAlta').value,
+                estado: document.getElementById('filterEstado').value,
+                cidade: document.getElementById('filterCidade').value.toUpperCase().trim(),
+                plano: document.getElementById('filterPlano').value
+            };
+
+            dadosFiltrados = dadosOriginais.filter(r => {
+                // Data
+                const dataInt = r.dataInternacao?.split(' ')[0];
+                if (filtros.dataInicio && dataInt < filtros.dataInicio) return false;
+                if (filtros.dataFim && dataInt > filtros.dataFim) return false;
+
+                // Situacao
+                if (filtros.situacao && r.situacao != filtros.situacao) return false;
+
+                // Hospital
+                if (filtros.hospital && r.hospital?.nome !== filtros.hospital) return false;
+
+                // MDC
+                if (filtros.mdc && r.drgBrasilRefinado?.mdc?.descricao !== filtros.mdc) return false;
+
+                // Especialidade
+                if (filtros.especialidade.length) {
+                    const esp = r.medico_responsavel_especialidade || r.medico?.[0]?.especialidade;
+                    if (!filtros.especialidade.includes(esp)) return false;
+                }
+
+                // Falha de estrutura/processo
+                if (filtros.falhaEstrutura.length) {
+                    const falhas = Array.isArray(r.falha_estrutura_descricoes)
+                        ? r.falha_estrutura_descricoes
+                        : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.descricao).filter(Boolean) : []);
+                    if (!falhas.some(f => filtros.falhaEstrutura.includes(f))) return false;
+                }
+
+                // Sexo
+                if (filtros.sexo && r.beneficiario?.sexo !== filtros.sexo) return false;
+
+                // Faixa etaria
+                if (filtros.idade) {
+                    const idade = r.beneficiario?.idadeEmAnos || 0;
+                    const faixas = {
+                        '0-17': idade <= 17,
+                        '18-40': idade >= 18 && idade <= 40,
+                        '41-60': idade >= 41 && idade <= 60,
+                        '61-80': idade >= 61 && idade <= 80,
+                        '80+': idade > 80
+                    };
+                    if (!faixas[filtros.idade]) return false;
+                }
+
+                // Peso DRG
+                if (filtros.peso) {
+                    const peso = r.drgBrasilRefinado?.peso || 0;
+                    const faixasPeso = {
+                        'baixo': peso < 1.0,
+                        'medio': peso >= 1.0 && peso <= 2.0,
+                        'alto': peso > 2.0
+                    };
+                    if (!faixasPeso[filtros.peso]) return false;
+                }
+
+                // Idoso fragil
+                if (filtros.idosoFragil && r.variaveis?.idosoFragil !== filtros.idosoFragil) return false;
+
+                // Condicao grave
+                if (filtros.condicaoGrave) {
+                    const grave = r.variaveis?.caGrave === 'S' || r.condicaoAdquiridaGrave === 'S';
+                    if (filtros.condicaoGrave === 'S' && !grave) return false;
+                    if (filtros.condicaoGrave === 'N' && grave) return false;
+                }
+
+                // Ventilacao
+                if (filtros.ventilacao && r.ventilacaoMecanica !== filtros.ventilacao) return false;
+
+                // CID
+                if (filtros.cid && !r.cidPrincipal?.codigo?.startsWith(filtros.cid)) return false;
+
+                // DRG
+                if (filtros.drg && !r.drgBrasilRefinado?.codigo?.startsWith(filtros.drg)) return false;
+
+                // Condicao alta
+                if (filtros.condicaoAlta && r.condicaoAlta !== filtros.condicaoAlta) return false;
+
+                // Estado
+                if (filtros.estado && r.estado !== filtros.estado) return false;
+
+                // Cidade (contains)
+                if (filtros.cidade && !(r.cidade || '').toUpperCase().includes(filtros.cidade)) return false;
+
+                // Plano
+                if (filtros.plano && r.beneficiario?.plano !== filtros.plano) return false;
+
+                return true;
+            });
+
+            document.getElementById('filteredCount').textContent =
+                `${dadosFiltrados.length} de ${dadosOriginais.length} registros`;
+
+            paginaAtual = 1;
+            atualizarKPIs();
+            atualizarGraficos();
+            atualizarTabela();
+        }
+
+        function limparFiltros() {
+            const limparMulti = (id) => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                Array.from(sel.options).forEach(o => { o.selected = false; });
+                if (sel.options.length) sel.options[0].selected = true;
+            };
+            document.getElementById('filterSituacao').value = '';
+            document.getElementById('filterHospital').value = '';
+            document.getElementById('filterMDC').value = '';
+            limparMulti('filterEspecialidade');
+            limparMulti('filterFalhaEstrutura');
+            document.getElementById('filterSexo').value = '';
+            document.getElementById('filterIdade').value = '';
+            document.getElementById('filterPeso').value = '';
+            document.getElementById('filterIdosoFragil').value = '';
+            document.getElementById('filterCondicaoGrave').value = '';
+            document.getElementById('filterVentilacao').value = '';
+            document.getElementById('filterCID').value = '';
+            document.getElementById('filterDRG').value = '';
+            document.getElementById('filterCondicaoAlta').value = '';
+            document.getElementById('filterEstado').value = '';
+            document.getElementById('filterCidade').value = '';
+            document.getElementById('filterPlano').value = '';
+            definirDatasPadrao(dadosOriginais);
+            aplicarFiltros();
+        }
+
+        function atualizarKPIs() {
+            const dados = dadosFiltrados;
+
+            document.getElementById('kpiTotal').textContent = dados.length;
+
+            // Permanencia media
+            const perms = dados.filter(r => r.permanenciaReal).map(r => r.permanenciaReal);
+            document.getElementById('kpiPermanencia').textContent =
+                perms.length ? (perms.reduce((a,b) => a+b, 0) / perms.length).toFixed(1) : '0';
+
+            // Permanencia prevista
+            const prevs = dados.filter(r => r.permanenciaPrevistaNaInternacao).map(r => r.permanenciaPrevistaNaInternacao);
+            document.getElementById('kpiPrevista').textContent =
+                prevs.length ? (prevs.reduce((a,b) => a+b, 0) / prevs.length).toFixed(1) : '0';
+
+            // Peso medio
+            const pesos = dados.map(r => r.drgBrasilRefinado?.peso ?? r.drg_peso).filter(v => v !== null && v !== undefined);
+            document.getElementById('kpiPeso').textContent =
+                pesos.length ? (pesos.reduce((a,b) => a+b, 0) / pesos.length).toFixed(3) : '0';
+
+            // Admissional
+            document.getElementById('kpiAdmissional').textContent =
+                dados.filter(r => r.situacao == '1').length;
+
+            // Altas
+            document.getElementById('kpiAltas').textContent =
+                dados.filter(r => r.situacao == '3').length;
+
+            // Idosos frageis
+            document.getElementById('kpiIdosos').textContent =
+                dados.filter(r => r.variaveis?.idosoFragil === 'S' || r.idoso_fragil === 'S').length;
+
+            // Condicao grave
+            document.getElementById('kpiGraves').textContent =
+                dados.filter(r => r.variaveis?.caGrave === 'S' || r.ca_grave === 'S' || r.condicaoAdquiridaGrave === 'S' || r.condicao_adquirida_grave === 'S').length;
+
+            // Ventilacao
+            document.getElementById('kpiVentilacao').textContent =
+                dados.filter(r => r.ventilacaoMecanica === 'S').length;
+
+            // Reinternacao
+            document.getElementById('kpiReinternacao').textContent =
+                dados.filter(r => r.reinternacao === 'S').length;
+        }
+
+        function atualizarGraficos() {
+            const dados = dadosFiltrados;
+
+            Object.values(charts).forEach(c => {
+                try { c.dispose(); } catch (e) {}
+            });
+            charts = {};
+
+            if (!window.echarts) return;
+
+            const palette = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#ff9800', '#ff5722'];
+            const trunc = (s, max = 26) => (s && s.length > max ? s.substring(0, max) + '...' : (s || ''));
+            const sortedEntries = (obj) => Object.entries(obj).sort((a, b) => b[1] - a[1]);
+            const num = (v) => {
+                const n = Number(v);
+                return Number.isFinite(n) ? n : null;
+            };
+
+            const init = (id) => {
+                const el = document.getElementById(id);
+                if (!el) return null;
+                const chart = echarts.init(el);
+                charts[id] = chart;
+                return chart;
+            };
+
+            const noData = (chart, texto = 'Sem dados') => {
+                chart.setOption({
+                    graphic: { type: 'text', left: 'center', top: 'middle', style: { text: texto, fill: '#999', fontSize: 14 } },
+                    series: []
+                }, { notMerge: true });
+            };
+
+            const zoomY = (len) => (len > 15 ? [
+                { type: 'inside', yAxisIndex: 0 },
+                { type: 'slider', yAxisIndex: 0, right: 2, width: 12 }
+            ] : []);
+
+            const zoomX = (len) => (len > 12 ? [
+                { type: 'inside' },
+                { type: 'slider', height: 12, bottom: 8 }
+            ] : []);
+
+            const contar = (getKey) => {
+                const m = {};
+                dados.forEach(r => {
+                    const k = getKey(r);
+                    if (!k) return;
+                    m[k] = (m[k] || 0) + 1;
+                });
+                return m;
+            };
+
+            const barH = (id, entries, opts = {}) => {
+                const chart = init(id);
+                if (!chart) return;
+                const labels = entries.map(e => e[0]);
+                const values = entries.map(e => e[1]);
+                if (!labels.length) return noData(chart);
+
+                const truncMax = opts.truncMax ?? 26;
+                const cor = opts.color ? (Array.isArray(opts.color) ? opts.color : [opts.color]) : palette;
+
+                chart.setOption({
+                    color: cor,
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' },
+                        formatter: (params) => {
+                            const p = params[0];
+                            const extra = opts.tooltipExtra ? (opts.tooltipExtra(p.name) || '') : '';
+                            return `<b>${p.name}</b>${extra}<br/>${p.value}`;
+                        }
+                    },
+                    grid: { left: 10, right: 26, top: 10, bottom: 10, containLabel: true },
+                    xAxis: { type: 'value', axisLabel: { color: '#666' } },
+                    yAxis: { type: 'category', data: labels, axisLabel: { color: '#666', formatter: (v) => trunc(v, truncMax) } },
+                    dataZoom: zoomY(labels.length),
+                    series: [{ type: 'bar', barMaxWidth: 18, itemStyle: { borderRadius: [0, 6, 6, 0] }, data: values }]
+                }, { notMerge: true });
+            };
+
+            // 1) Internacoes por mes
+            const porMes = contar(r => r.dataInternacao?.substring(0, 7));
+            const meses = Object.keys(porMes).sort();
+            const chartMes = init('chartMes');
+            if (chartMes) {
+                if (!meses.length) noData(chartMes);
+                else chartMes.setOption({
+                    color: palette,
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: 40, right: 15, top: 15, bottom: 35, containLabel: true },
+                    xAxis: { type: 'category', data: meses, axisLabel: { color: '#666' } },
+                    yAxis: { type: 'value', axisLabel: { color: '#666' } },
+                    dataZoom: zoomX(meses.length),
+                    series: [{ type: 'line', smooth: true, areaStyle: { opacity: 0.12 }, data: meses.map(m => porMes[m]) }]
+                }, { notMerge: true });
+            }
+
+            // 2) Situacao (pizza)
+            const porSit = contar(r => situacoes[r.situacao] || String(r.situacao || 'Outro'));
+            const chartSit = init('chartSituacao');
+            if (chartSit) {
+                const data = Object.entries(porSit).map(([name, value]) => ({ name, value }));
+                if (!data.length) noData(chartSit);
+                else chartSit.setOption({
+                    color: ['#2196f3', '#ff9800', '#4caf50', '#9c27b0', '#607d8b'],
+                    tooltip: { trigger: 'item' },
+                    legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
+                    series: [{ type: 'pie', radius: ['45%', '72%'], label: { show: false }, data }]
+                }, { notMerge: true });
+            }
+
+            // 3) DRG (ranking)
+            const drgEntries = aplicarTop(sortedEntries(contar(r => {
+                const code = r.drgBrasilRefinado?.codigo || r.drg_codigo;
+                const desc = r.drgBrasilRefinado?.descricao || r.drg_descricao;
+                return r.drg_codigo_nome || (code && desc ? `${code} - ${desc}` : (code || desc));
+            })), 'chartDRG');
+            barH('chartDRG', drgEntries, { color: '#e91e63', truncMax: 40 });
+
+            // 4) MDC (ranking)
+            const mdcEntries = aplicarTop(sortedEntries(contar(r => r.drgBrasilRefinado?.mdc?.descricao || r.mdc_descricao || 'Sem MDC')), 'chartMDC');
+            barH('chartMDC', mdcEntries, { truncMax: 26 });
+
+            // 5) Sexo x Faixa Etaria
+            const faixas = ['0-17', '18-40', '41-60', '61-80', '80+'];
+            const cont = { M: [0, 0, 0, 0, 0], F: [0, 0, 0, 0, 0] };
+            dados.forEach(r => {
+                const idade = num(r.beneficiario?.idadeEmAnos);
+                const sexo = r.beneficiario?.sexo;
+                if (sexo !== 'M' && sexo !== 'F') return;
+                if (idade === null) return;
+                const idx = idade <= 17 ? 0 : idade <= 40 ? 1 : idade <= 60 ? 2 : idade <= 80 ? 3 : 4;
+                cont[sexo][idx]++;
+            });
+            const chartIdade = init('chartIdade');
+            if (chartIdade) {
+                chartIdade.setOption({
+                    color: ['#2196f3', '#e91e63'],
+                    tooltip: { trigger: 'axis' },
+                    legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
+                    grid: { left: 40, right: 15, top: 15, bottom: 35, containLabel: true },
+                    xAxis: { type: 'category', data: faixas, axisLabel: { color: '#666' } },
+                    yAxis: { type: 'value', axisLabel: { color: '#666' } },
+                    series: [
+                        { name: 'Masculino', type: 'bar', stack: 'total', barMaxWidth: 22, data: cont.M },
+                        { name: 'Feminino', type: 'bar', stack: 'total', barMaxWidth: 22, data: cont.F }
+                    ]
+                }, { notMerge: true });
+            }
+
+            // 6) Permanencia (media) por mes
+            const perm = {};
+            dados.forEach(r => {
+                const mes = r.dataInternacao?.substring(0, 7);
+                if (!mes) return;
+                if (!perm[mes]) perm[mes] = { rs: 0, rn: 0, ps: 0, pn: 0 };
+                const real = num(r.permanenciaReal);
+                const prev = num(r.permanenciaPrevistaNaInternacao);
+                if (real !== null) { perm[mes].rs += real; perm[mes].rn++; }
+                if (prev !== null) { perm[mes].ps += prev; perm[mes].pn++; }
+            });
+            const mesesPerm = Object.keys(perm).sort();
+            const real = mesesPerm.map(m => perm[m].rn ? Number((perm[m].rs / perm[m].rn).toFixed(1)) : 0);
+            const prev = mesesPerm.map(m => perm[m].pn ? Number((perm[m].ps / perm[m].pn).toFixed(1)) : 0);
+            const chartPerm = init('chartPermanencia');
+            if (chartPerm) {
+                if (!mesesPerm.length) noData(chartPerm);
+                else chartPerm.setOption({
+                    color: ['#4caf50', '#ff9800'],
+                    tooltip: { trigger: 'axis' },
+                    legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
+                    grid: { left: 40, right: 15, top: 15, bottom: 35, containLabel: true },
+                    xAxis: { type: 'category', data: mesesPerm, axisLabel: { color: '#666' } },
+                    yAxis: { type: 'value', axisLabel: { color: '#666' } },
+                    dataZoom: zoomX(mesesPerm.length),
+                    series: [
+                        { name: 'Real', type: 'line', smooth: true, areaStyle: { opacity: 0.06 }, data: real },
+                        { name: 'Prevista', type: 'line', smooth: true, lineStyle: { type: 'dashed' }, data: prev }
+                    ]
+                }, { notMerge: true });
+            }
+
+            // 7) Distribuicao de peso
+            const faixasPeso = { '< 0.5': 0, '0.5-1.0': 0, '1.0-1.5': 0, '1.5-2.0': 0, '2.0-3.0': 0, '> 3.0': 0 };
+            dados.forEach(r => {
+                const peso = num(r.drgBrasilRefinado?.peso ?? r.drg_peso);
+                if (peso === null) return;
+                if (peso < 0.5) faixasPeso['< 0.5']++;
+                else if (peso < 1.0) faixasPeso['0.5-1.0']++;
+                else if (peso < 1.5) faixasPeso['1.0-1.5']++;
+                else if (peso < 2.0) faixasPeso['1.5-2.0']++;
+                else if (peso < 3.0) faixasPeso['2.0-3.0']++;
+                else faixasPeso['> 3.0']++;
+            });
+            const chartPeso = init('chartPesoDist');
+            if (chartPeso) {
+                const labels = Object.keys(faixasPeso);
+                chartPeso.setOption({
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    grid: { left: 40, right: 15, top: 10, bottom: 30, containLabel: true },
+                    xAxis: { type: 'category', data: labels, axisLabel: { color: '#666' } },
+                    yAxis: { type: 'value', axisLabel: { color: '#666' } },
+                    series: [{
+                        type: 'bar',
+                        barMaxWidth: 28,
+                        itemStyle: { borderRadius: [6, 6, 0, 0], color: (p) => ['#4caf50', '#8bc34a', '#ffeb3b', '#ff9800', '#f44336', '#9c27b0'][p.dataIndex % 6] },
+                        data: labels.map(k => faixasPeso[k])
+                    }]
+                }, { notMerge: true });
+            }
+
+            // 8) CIDs (ranking)
+            const cidEntries = aplicarTop(sortedEntries(contar(r => r.cidPrincipal?.codigo || r.cid_principal_codigo)), 'chartCID');
+            barH('chartCID', cidEntries, { color: '#9c27b0' });
+
+            // 9) Hospitais (ranking)
+            const hospEntries = aplicarTop(sortedEntries(contar(r => r.hospital?.nome || r.hospital_nome || 'Desconhecido')), 'chartHospital');
+            barH('chartHospital', hospEntries, { truncMax: 24 });
+
+            // 10) Sankey (Especialidade -> DRG -> Falha -> Peso -> Permanencia)
+            const chartSankey = init('chartSankey');
+            if (chartSankey) {
+                try {
+                    const d1 = {};
+                    const d2 = {};
+                    const d3 = {};
+                    const d4 = {};
+                    const d5 = {};
+                    const drgAgg = {};
+                    const statusFrom = (r) => {
+                        if (r.permanencia_status) return r.permanencia_status;
+                        const real = num(r.permanenciaReal);
+                        const prev = num(r.permanenciaPrevistaNaInternacao);
+                        if (real === null || prev === null) return 'Sem Dados';
+                        if (real <= prev) return 'Ideal';
+                        const diff = real - prev;
+                        const limite = Math.max(1, prev * 0.1);
+                        return diff <= limite ? 'Proximo do ideal' : 'Acima';
+                    };
+                    const drgDescricao = (r) => {
+                        return r.drgBrasilRefinado?.descricao || r.drg_descricao || 'Sem DRG';
+                    };
+                    const causaPrincipal = (r) => {
+                        if (r.falha_estrutura_principal) return r.falha_estrutura_principal;
+                        if (Array.isArray(r.falha_estrutura_descricoes) && r.falha_estrutura_descricoes.length) return r.falha_estrutura_descricoes[0];
+                        if (Array.isArray(r.causaExterna) && r.causaExterna.length) return r.causaExterna[0]?.descricao || 'Sem Falha';
+                        return 'Sem Falha';
+                    };
+                    const pesoFaixa = (r) => {
+                        const peso = num(r.drgBrasilRefinado?.peso ?? r.drg_peso);
+                        if (peso === null) return 'Sem Peso';
+                        if (peso <= 1.0) return '0-1';
+                        if (peso <= 2.0) return '1,1-2';
+                        if (peso <= 3.0) return '2,1-3';
+                        if (peso <= 4.0) return '3,1-4';
+                        if (peso <= 5.0) return '4,1-5';
+                        return '5,1+';
+                    };
+                    const statusMedioDRG = (codigo) => {
+                        const agg = drgAgg[codigo];
+                        if (!agg || !agg.realN || !agg.prevN) return 'Sem Dados';
+                        const realMedio = agg.realS / agg.realN;
+                        const prevMedio = agg.prevS / agg.prevN;
+                        if (realMedio <= prevMedio) return 'Ideal';
+                        const diff = realMedio - prevMedio;
+                        const limite = Math.max(1, prevMedio * 0.1);
+                        return diff <= limite ? 'Proximo do ideal' : 'Acima';
+                    };
+                    dados.forEach(r => {
+                        const a = r.medico_responsavel_especialidade || r.medico?.[0]?.especialidade || 'Sem Especialidade';
+                        const b = drgDescricao(r);
+                        const c = causaPrincipal(r);
+                        const d = pesoFaixa(r);
+                        const real = num(r.permanenciaReal);
+                        const prev = num(r.permanenciaPrevistaNaInternacao);
+                        if (!drgAgg[b]) drgAgg[b] = { realS: 0, realN: 0, prevS: 0, prevN: 0 };
+                        if (real !== null) { drgAgg[b].realS += real; drgAgg[b].realN += 1; }
+                        if (prev !== null) { drgAgg[b].prevS += prev; drgAgg[b].prevN += 1; }
+                        d1[a] = (d1[a] || 0) + 1;
+                        d2[b] = (d2[b] || 0) + 1;
+                        d3[c] = (d3[c] || 0) + 1;
+                        d4[d] = (d4[d] || 0) + 1;
+                    });
+
+                    const top1 = new Set(aplicarTop(sortedEntries(d1), 'chartSankey').map(e => e[0]));
+                    const top2 = new Set(sortedEntries(d2).map(e => e[0]));
+                    const causasEntries = sortedEntries(d3);
+                    const causasTopVal = getSankeyCausaTop();
+                    const causasTopEntries = (causasTopVal === 'all')
+                        ? causasEntries
+                        : causasEntries.slice(0, parseInt(causasTopVal, 10) || 0);
+                    const topCausas = new Set(causasTopEntries.map(e => e[0]));
+
+                    const norm = (v, setTop, fallback) => (!v ? fallback : (setTop.has(v) ? v : 'Outros'));
+                    const linksMap = new Map();
+                    const add = (s, t) => {
+                        const key = `${s}|||${t}`;
+                        linksMap.set(key, (linksMap.get(key) || 0) + 1);
+                    };
+
+                    dados.forEach(r => {
+                        const a = norm(r.medico_responsavel_especialidade || r.medico?.[0]?.especialidade || 'Sem Especialidade', top1, 'Sem Especialidade');
+                        const b = norm(drgDescricao(r), top2, 'Sem DRG');
+                        const causa = causaPrincipal(r);
+                        const causaNorm = (causa === 'Sem Falha') ? 'Sem Falha' : (topCausas.size ? (topCausas.has(causa) ? causa : 'Outras Falhas') : (causa || 'Sem Falha'));
+                        const d = norm(pesoFaixa(r), new Set(Object.keys(d4)), 'Sem Peso');
+                        const e = statusMedioDRG(b);
+                        d5[e] = (d5[e] || 0) + 1;
+                        add(a, b);
+                        add(b, causaNorm);
+                        add(causaNorm, d);
+                        add(d, e);
+                    });
+
+                    const nodesSet = new Set();
+                    const links = [];
+                    for (const [key, value] of linksMap.entries()) {
+                        const [source, target] = key.split('|||');
+                        nodesSet.add(source);
+                        nodesSet.add(target);
+                        links.push({ source, target, value });
+                    }
+                    const statusColors = {
+                        'Ideal': '#4caf50',
+                        'Proximo do ideal': '#ff9800',
+                        'Acima': '#f44336',
+                        'Sem Dados': '#9e9e9e'
+                    };
+                    const nodes = Array.from(nodesSet).map(name => ({
+                        name,
+                        itemStyle: statusColors[name] ? { color: statusColors[name] } : undefined
+                    }));
+
+                    if (!nodes.length || !links.length) noData(chartSankey);
+                    else chartSankey.setOption({
+                        animation: true,
+                        animationDuration: 1600,
+                        animationEasing: 'cubicOut',
+                        animationDurationUpdate: 900,
+                        animationEasingUpdate: 'cubicOut',
+                        tooltip: {
+                            trigger: 'item',
+                            triggerOn: 'mousemove',
+                            formatter: (p) => {
+                                if (p.dataType === 'edge') {
+                                    return `${p.data.source} → ${p.data.target}<br/>${p.data.value}`;
+                                }
+                                return p.name;
+                            }
+                        },
+                        series: [{
+                            type: 'sankey',
+                            data: nodes,
+                            links,
+                            emphasis: { focus: 'adjacency' },
+                            draggable: true,
+                            nodeGap: 14,
+                            nodeWidth: 18,
+                            nodeAlign: 'justify',
+                            layoutIterations: 32,
+                            lineStyle: { color: 'source', curveness: 0.5, opacity: 0.55 },
+                            label: { color: '#333', fontSize: 11, formatter: (p) => (p.name && p.name.length > 44 ? p.name.slice(0, 44) + '...' : p.name) }
+                        }]
+                    }, { notMerge: true });
+                } catch (e) {
+                    noData(chartSankey, 'Erro no Sankey');
+                }
+            }
+
+            // 11) CMI (peso medio) por mes
+            const cmi = {};
+            dados.forEach(r => {
+                const mes = (r.dataInternacao || r.mesInternacao || '').substring(0, 7);
+                const peso = num(r.drgBrasilRefinado?.peso ?? r.drg_peso);
+                if (!mes || peso === null) return;
+                if (!cmi[mes]) cmi[mes] = { s: 0, n: 0 };
+                cmi[mes].s += peso;
+                cmi[mes].n += 1;
+            });
+            const mesesCMI = Object.keys(cmi).sort();
+            const valoresCMI = mesesCMI.map(m => Number((cmi[m].s / cmi[m].n).toFixed(3)));
+            const chartCMI = init('chartCMI');
+            if (chartCMI) {
+                try {
+                    if (!mesesCMI.length) noData(chartCMI);
+                    else chartCMI.setOption({
+                        color: ['#673ab7'],
+                        tooltip: { trigger: 'axis' },
+                        grid: { left: 40, right: 15, top: 15, bottom: 35, containLabel: true },
+                        xAxis: { type: 'category', data: mesesCMI, axisLabel: { color: '#666' } },
+                        yAxis: { type: 'value', axisLabel: { color: '#666' } },
+                        dataZoom: zoomX(mesesCMI.length),
+                        series: [{ type: 'line', smooth: true, areaStyle: { opacity: 0.10 }, data: valoresCMI }]
+                    }, { notMerge: true });
+                } catch (e) {
+                    noData(chartCMI, 'Erro no CMI');
+                }
+            }
+
+            // 12) Indicadores por mes (taxas %)
+            const ind = {};
+            dados.forEach(r => {
+                const mes = (r.dataInternacao || r.mesInternacao || '').substring(0, 7);
+                if (!mes) return;
+                if (!ind[mes]) ind[mes] = { total: 0, grave: 0, vent: 0, rein: 0, idoso: 0 };
+                ind[mes].total++;
+                if (r.variaveis?.caGrave === 'S' || r.ca_grave === 'S' || r.condicaoAdquiridaGrave === 'S' || r.condicao_adquirida_grave === 'S') ind[mes].grave++;
+                if (r.ventilacaoMecanica === 'S') ind[mes].vent++;
+                if (r.reinternacao === 'S') ind[mes].rein++;
+                if (r.variaveis?.idosoFragil === 'S' || r.idoso_fragil === 'S') ind[mes].idoso++;
+            });
+            const mesesInd = Object.keys(ind).sort();
+            const taxa = (m, k) => ind[m].total ? Number(((ind[m][k] / ind[m].total) * 100).toFixed(1)) : 0;
+            const chartInd = init('chartIndicadores');
+            if (chartInd) {
+                try {
+                    if (!mesesInd.length) noData(chartInd);
+                    else chartInd.setOption({
+                        color: ['#f44336', '#03a9f4', '#ff9800', '#9c27b0'],
+                        tooltip: { trigger: 'axis', valueFormatter: (v) => `${v}%` },
+                        legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
+                        grid: { left: 40, right: 15, top: 15, bottom: 35, containLabel: true },
+                        xAxis: { type: 'category', data: mesesInd, axisLabel: { color: '#666' } },
+                        yAxis: { type: 'value', axisLabel: { color: '#666', formatter: '{value}%' }, max: 100 },
+                        dataZoom: zoomX(mesesInd.length),
+                        series: [
+                            { name: 'Condicao Grave', type: 'line', smooth: true, data: mesesInd.map(m => taxa(m, 'grave')) },
+                            { name: 'Ventilacao', type: 'line', smooth: true, data: mesesInd.map(m => taxa(m, 'vent')) },
+                            { name: 'Reinternacao', type: 'line', smooth: true, data: mesesInd.map(m => taxa(m, 'rein')) },
+                            { name: 'Idoso Fragil', type: 'line', smooth: true, data: mesesInd.map(m => taxa(m, 'idoso')) }
+                        ]
+                    }, { notMerge: true });
+                } catch (e) {
+                    noData(chartInd, 'Erro nos Indicadores');
+                }
+            }
+
+            // 13) Falhas de estrutura/processo (ranking)
+            const falhaMap = {};
+            dados.forEach(r => {
+                const falhas = Array.isArray(r.falha_estrutura_descricoes)
+                    ? r.falha_estrutura_descricoes
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.descricao).filter(Boolean) : []);
+                falhas.forEach(f => {
+                    if (!f) return;
+                    falhaMap[f] = (falhaMap[f] || 0) + 1;
+                });
+            });
+            const falhaEntries = aplicarTop(sortedEntries(falhaMap), 'chartFalhaEstrutura');
+            barH('chartFalhaEstrutura', falhaEntries, { color: '#ff5722', truncMax: 34 });
+
+            // 14) Falhas por mes / especialidade / origem
+            const falhaMes = {};
+            const falhaEsp = {};
+            const falhaOrigem = {};
+            dados.forEach(r => {
+                const falhas = Array.isArray(r.falha_estrutura_descricoes)
+                    ? r.falha_estrutura_descricoes
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.descricao).filter(Boolean) : []);
+                if (!falhas.length) return;
+
+                const mes = (r.dataInternacao || r.mesInternacao || '').substring(0, 7);
+                if (mes) falhaMes[mes] = (falhaMes[mes] || 0) + 1;
+
+                const esp = r.medico_responsavel_especialidade || r.medico?.[0]?.especialidade || 'Sem Especialidade';
+                falhaEsp[esp] = (falhaEsp[esp] || 0) + 1;
+
+                const origens = Array.isArray(r.falha_estrutura_origens)
+                    ? r.falha_estrutura_origens
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.origem).filter(Boolean) : []);
+                origens.forEach(o => {
+                    falhaOrigem[o] = (falhaOrigem[o] || 0) + 1;
+                });
+            });
+
+            const chartFalhaMes = init('chartFalhaMes');
+            if (chartFalhaMes) {
+                const mesesFalha = Object.keys(falhaMes).sort();
+                if (!mesesFalha.length) noData(chartFalhaMes);
+                else chartFalhaMes.setOption({
+                    color: ['#ff7043'],
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: 40, right: 15, top: 15, bottom: 35, containLabel: true },
+                    xAxis: { type: 'category', data: mesesFalha, axisLabel: { color: '#666' } },
+                    yAxis: { type: 'value', axisLabel: { color: '#666' } },
+                    dataZoom: zoomX(mesesFalha.length),
+                    series: [{ type: 'line', smooth: true, areaStyle: { opacity: 0.10 }, data: mesesFalha.map(m => falhaMes[m]) }]
+                }, { notMerge: true });
+            }
+
+            const falhaEspEntries = aplicarTop(sortedEntries(falhaEsp), 'chartFalhaEspecialidade');
+            barH('chartFalhaEspecialidade', falhaEspEntries, { color: '#ef5350', truncMax: 28 });
+
+            const chartFalhaOrigem = init('chartFalhaOrigem');
+            if (chartFalhaOrigem) {
+                const data = Object.entries(falhaOrigem).map(([name, value]) => ({ name, value }));
+                if (!data.length) noData(chartFalhaOrigem);
+                else chartFalhaOrigem.setOption({
+                    color: ['#ff9800', '#ff7043', '#ffb74d', '#ff8a65', '#ffa726'],
+                    tooltip: { trigger: 'item' },
+                    legend: { bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
+                    series: [{ type: 'pie', radius: ['45%', '70%'], label: { show: false }, data }]
+                }, { notMerge: true });
+            }
+
+            // 15) Scatter (peso x permanencia real)
+            const pontos = [];
+            dados.forEach(r => {
+                const peso = num(r.drgBrasilRefinado?.peso ?? r.drg_peso);
+                const perm = num(r.permanenciaReal);
+                if (peso === null || perm === null) return;
+                pontos.push([peso, perm]);
+            });
+            const chartScatter = init('chartScatter');
+            if (chartScatter) {
+                try {
+                    if (!pontos.length) noData(chartScatter);
+                    else {
+                        const maxPontos = 7000;
+                        const passo = pontos.length > maxPontos ? Math.ceil(pontos.length / maxPontos) : 1;
+                        const amostra = passo === 1 ? pontos : pontos.filter((_, i) => i % passo === 0);
+                        chartScatter.setOption({
+                            color: ['#2196f3'],
+                            tooltip: { trigger: 'item', formatter: (p) => `Peso DRG: <b>${p.value[0]}</b><br/>Permanencia Real: <b>${p.value[1]}</b>` },
+                            grid: { left: 50, right: 15, top: 10, bottom: 35, containLabel: true },
+                            xAxis: { type: 'value', name: 'Peso DRG', nameLocation: 'middle', nameGap: 25, axisLabel: { color: '#666' } },
+                            yAxis: { type: 'value', name: 'Permanencia Real', nameLocation: 'middle', nameGap: 35, axisLabel: { color: '#666' } },
+                            dataZoom: [
+                                { type: 'inside', xAxisIndex: 0 },
+                                { type: 'inside', yAxisIndex: 0 },
+                                { type: 'slider', xAxisIndex: 0, height: 12, bottom: 8 }
+                            ],
+                            series: [{ type: 'scatter', data: amostra, symbolSize: 6, itemStyle: { opacity: 0.6 } }]
+                        }, { notMerge: true });
+                    }
+                } catch (e) {
+                    noData(chartScatter, 'Erro no Scatter');
+                }
+            }
+        }
+
+        function atualizarTabela() {
+            const inicio = (paginaAtual - 1) * itensPorPagina;
+            const fim = inicio + itensPorPagina;
+            const pagina = dadosFiltrados.slice(inicio, fim);
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            pagina.forEach(r => {
+                const tr = document.createElement('tr');
+                const sit = r.situacao || '';
+                const peso = r.drgBrasilRefinado?.peso || 0;
+                let pesoClass = peso > 2 ? 'peso-alto' : peso >= 1 ? 'peso-medio' : 'peso-baixo';
+                const drgLabel = r.drg_codigo_nome
+                    || (r.drgBrasilRefinado?.codigo && r.drgBrasilRefinado?.descricao ? `${r.drgBrasilRefinado.codigo} - ${r.drgBrasilRefinado.descricao}` : (r.drgBrasilRefinado?.codigo || r.drg_codigo || ''));
+
+                tr.innerHTML = `
+                    <td>${r.id || ''}</td>
+                    <td><span class="badge ${badgeClass[sit] || ''}">${situacoes[sit] || sit}</span></td>
+                    <td>${r.dataInternacao?.split(' ')[0] || ''}</td>
+                    <td>${r.dataAlta?.split(' ')[0] || ''}</td>
+                    <td title="${r.hospital?.nome || ''}">${(r.hospital?.nome || '').substring(0,20)}</td>
+                    <td>${r.beneficiario?.sexo || ''}</td>
+                    <td>${r.beneficiario?.idadeEmAnos || ''}</td>
+                    <td title="${r.cidPrincipal?.descricao || ''}">${r.cidPrincipal?.codigo || ''}</td>
+                    <td title="${drgLabel}">${drgLabel ? drgLabel.substring(0, 24) : ''}</td>
+                    <td class="${pesoClass}">${peso || ''}</td>
+                    <td>${r.permanenciaReal || ''}</td>
+                    <td>${r.permanenciaPrevistaNaInternacao || ''}</td>
+                    <td title="${r.drgBrasilRefinado?.mdc?.descricao || ''}">${r.drgBrasilRefinado?.mdc?.codigo || ''}</td>
+                    <td>${r.variaveis?.idosoFragil || ''}</td>
+                    <td>${r.variaveis?.caGrave === 'S' || r.condicaoAdquiridaGrave === 'S' ? 'S' : 'N'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            renderizarPaginacao();
+        }
+
+        function renderizarPaginacao() {
+            const totalPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina);
+            const pag = document.getElementById('pagination');
+            pag.innerHTML = '';
+
+            if (totalPaginas <= 1) return;
+
+            // Anterior
+            const btnAnterior = document.createElement('button');
+            btnAnterior.textContent = '<';
+            btnAnterior.disabled = paginaAtual === 1;
+            btnAnterior.onclick = () => { paginaAtual--; atualizarTabela(); };
+            pag.appendChild(btnAnterior);
+
+            // Paginas
+            let inicio = Math.max(1, paginaAtual - 2);
+            let fim = Math.min(totalPaginas, paginaAtual + 2);
+
+            for (let i = inicio; i <= fim; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = i === paginaAtual ? 'active' : '';
+                btn.onclick = () => { paginaAtual = i; atualizarTabela(); };
+                pag.appendChild(btn);
+            }
+
+            // Proximo
+            const btnProximo = document.createElement('button');
+            btnProximo.textContent = '>';
+            btnProximo.disabled = paginaAtual === totalPaginas;
+            btnProximo.onclick = () => { paginaAtual++; atualizarTabela(); };
+            pag.appendChild(btnProximo);
+
+            // Info
+            const info = document.createElement('span');
+            info.textContent = ` Pagina ${paginaAtual} de ${totalPaginas}`;
+            pag.appendChild(info);
+        }
+
+        // Busca na tabela
+        document.getElementById('searchBox').addEventListener('input', function(e) {
+            const termo = e.target.value.toLowerCase();
+            document.querySelectorAll('#tableBody tr').forEach(tr => {
+                tr.style.display = tr.textContent.toLowerCase().includes(termo) ? '' : 'none';
+            });
+        });
+
+        // Ordenar
+        let sortDir = 1;
+        function sortTable(col) {
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                const aVal = a.cells[col].textContent;
+                const bVal = b.cells[col].textContent;
+                const aNum = parseFloat(aVal);
+                const bNum = parseFloat(bVal);
+                if (!isNaN(aNum) && !isNaN(bNum)) return (aNum - bNum) * sortDir;
+                return aVal.localeCompare(bVal) * sortDir;
+            });
+            sortDir *= -1;
+            rows.forEach(r => tbody.appendChild(r));
+        }
+
+        // Exportar CSV filtrado
+        function exportarCSV() {
+            const headers = ['ID','Situacao','Data Internacao','Data Alta','Hospital','Sexo','Idade','CID','DRG','Peso','Perm Real','Perm Prevista','MDC','Idoso Fragil','Condicao Grave'];
+            const rows = dadosFiltrados.map(r => [
+                r.id,
+                situacoes[r.situacao] || r.situacao,
+                r.dataInternacao?.split(' ')[0],
+                r.dataAlta?.split(' ')[0],
+                r.hospital?.nome,
+                r.beneficiario?.sexo,
+                r.beneficiario?.idadeEmAnos,
+                r.cidPrincipal?.codigo,
+                r.drgBrasilRefinado?.codigo,
+                r.drgBrasilRefinado?.peso,
+                r.permanenciaReal,
+                r.permanenciaPrevistaNaInternacao,
+                r.drgBrasilRefinado?.mdc?.descricao,
+                r.variaveis?.idosoFragil,
+                r.variaveis?.caGrave === 'S' || r.condicaoAdquiridaGrave === 'S' ? 'S' : 'N'
+            ]);
+
+            let csv = headers.join(';') + '\n';
+            rows.forEach(row => csv += row.map(v => `"${v || ''}"`).join(';') + '\n');
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `drg_filtrado_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+    </script>
+</body>
+</html>
