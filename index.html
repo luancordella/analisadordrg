@@ -763,6 +763,7 @@
                     <div class="filters-title">Filtros</div>
                     <div>
                         <span id="filteredCount" style="color: #666; margin-right: 15px;"></span>
+                        <button type="button" class="btn btn-secondary" id="toggleFiltersBtn">Ocultar filtros</button>
                     </div>
                 </div>
                 <div class="filters-grid">
@@ -1151,17 +1152,28 @@
         window.addEventListener('DOMContentLoaded', () => {
             rebuildDeck();
             montarToolbars();
+            const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+            if (toggleFiltersBtn) {
+                toggleFiltersBtn.addEventListener('click', () => {
+                    const grid = document.querySelector('.filters-grid');
+                    const buttons = document.querySelector('.buttons-row');
+                    const ocultar = !(grid && grid.classList.contains('hidden'));
+                    if (grid) grid.classList.toggle('hidden', ocultar);
+                    if (buttons) buttons.classList.toggle('hidden', ocultar);
+                    toggleFiltersBtn.textContent = ocultar ? 'Mostrar filtros' : 'Ocultar filtros';
+                });
+            }
             const prevBtn = document.getElementById('presentationPrev');
             const nextBtn = document.getElementById('presentationNext');
             const closeBtn = document.getElementById('presentationClose');
-            const toggleFiltersBtn = document.getElementById('presentationToggleFilters');
+            const togglePresentationFiltersBtn = document.getElementById('presentationToggleFilters');
             const filtersPanel = document.getElementById('presentationFilters');
 
             if (prevBtn) prevBtn.addEventListener('click', () => showPresentationChart(presentationIndex - 1));
             if (nextBtn) nextBtn.addEventListener('click', () => showPresentationChart(presentationIndex + 1));
             if (closeBtn) closeBtn.addEventListener('click', () => togglePresentation());
-            if (toggleFiltersBtn && filtersPanel) {
-                toggleFiltersBtn.addEventListener('click', () => filtersPanel.classList.toggle('hidden'));
+            if (togglePresentationFiltersBtn && filtersPanel) {
+                togglePresentationFiltersBtn.addEventListener('click', () => filtersPanel.classList.toggle('hidden'));
             }
             if (deckEl) {
                 deckEl.addEventListener('scroll', () => {
