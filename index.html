@@ -322,6 +322,22 @@
             box-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
         }
 
+        .presentation-overlay.presentation-dark .falha-hero-info {
+            background: linear-gradient(180deg, rgba(18, 22, 30, 0.96), rgba(12, 14, 20, 0.96));
+            border-color: rgba(255,255,255,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+        }
+
+        .presentation-overlay.presentation-dark .falha-hero-info-title,
+        .presentation-overlay.presentation-dark .falha-hero-info-row strong {
+            color: #fff;
+        }
+
+        .presentation-overlay.presentation-dark .falha-hero-info-sub,
+        .presentation-overlay.presentation-dark .falha-hero-info-row span {
+            color: #c9c9c9;
+        }
+
         .falha-hero-info-title {
             font-size: 14px;
             font-weight: 700;
@@ -485,6 +501,7 @@
         }
 
         .presentation-overlay.hidden { display: none; }
+        .presentation-overlay.presentation-dark { background: #0b0d12; }
 
         .presentation-header {
             height: 58px;
@@ -495,6 +512,12 @@
             background: #fff;
             color: #1b1b1b;
             border-bottom: 1px solid #e5e5e5;
+        }
+
+        .presentation-overlay.presentation-dark .presentation-header {
+            background: rgba(10, 12, 18, 0.9);
+            color: #fff;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         .presentation-title {
@@ -523,6 +546,16 @@
             background: #ededed;
         }
 
+        .presentation-overlay.presentation-dark .presentation-btn {
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        .presentation-overlay.presentation-dark .presentation-btn:hover {
+            background: rgba(255,255,255,0.18);
+        }
+
         .presentation-filters {
             display: flex;
             align-items: center;
@@ -537,6 +570,12 @@
             border: 1px solid rgba(0,0,0,0.18);
             background: #fff;
             font-size: 12px;
+        }
+
+        .presentation-overlay.presentation-dark .presentation-filters select {
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.12);
+            color: #fff;
         }
 
         .presentation-body {
@@ -584,6 +623,14 @@
         }
 
         .presentation-nav:hover { background: #ededed; }
+
+        .presentation-overlay.presentation-dark .presentation-nav {
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        .presentation-overlay.presentation-dark .presentation-nav:hover { background: rgba(255,255,255,0.18); }
 
         .presentation-nav.prev { left: 16px; }
         .presentation-nav.next { right: 16px; }
@@ -1242,6 +1289,7 @@
             <div class="presentation-controls">
                 <button id="presentationToggleFilters" class="presentation-btn" type="button">Filtros</button>
                 <div id="presentationFilters" class="presentation-filters hidden"></div>
+                <button id="presentationThemeToggle" class="presentation-btn" type="button">Modo escuro</button>
                 <button id="presentationClose" class="presentation-btn" type="button">Fechar</button>
             </div>
         </div>
@@ -1265,6 +1313,7 @@
         let presentationCharts = [];
         let presentationIndex = 0;
         let presentationChartInstance = null;
+        let presentationDark = false;
 
         // Mapeamentos
         const situacoes = { '1': 'Admissional', '2': 'Prorrogacao', '3': 'Alta', '4': 'Autorizacao' };
@@ -1292,6 +1341,7 @@
             const nextBtn = document.getElementById('presentationNext');
             const closeBtn = document.getElementById('presentationClose');
             const togglePresentationFiltersBtn = document.getElementById('presentationToggleFilters');
+            const themeToggleBtn = document.getElementById('presentationThemeToggle');
             const filtersPanel = document.getElementById('presentationFilters');
 
             if (prevBtn) prevBtn.addEventListener('click', () => showPresentationChart(presentationIndex - 1));
@@ -1299,6 +1349,9 @@
             if (closeBtn) closeBtn.addEventListener('click', () => togglePresentation());
             if (togglePresentationFiltersBtn && filtersPanel) {
                 togglePresentationFiltersBtn.addEventListener('click', () => filtersPanel.classList.toggle('hidden'));
+            }
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', () => setPresentationTheme(!presentationDark));
             }
             if (deckEl) {
                 deckEl.addEventListener('scroll', () => {
@@ -1634,7 +1687,7 @@
                 const lblEsp = document.createElement('span');
                 lblEsp.textContent = 'Top Esp';
                 lblEsp.style.fontSize = '11px';
-                lblEsp.style.color = '#fff';
+                lblEsp.style.color = presentationDark ? '#fff' : '#111';
                 filters.appendChild(lblEsp);
                 filters.appendChild(criarSelectTop(getChartTopValue(chartId), (v) => setChartTopValue(chartId, v)));
                 return;
@@ -1644,7 +1697,7 @@
                 const lbl = document.createElement('span');
                 lbl.textContent = 'Top';
                 lbl.style.fontSize = '11px';
-                lbl.style.color = '#fff';
+                lbl.style.color = presentationDark ? '#fff' : '#111';
                 filters.appendChild(lbl);
                 filters.appendChild(criarSelectTop(getChartTopValue(chartId), (v) => setChartTopValue(chartId, v)));
                 return;
@@ -1654,7 +1707,99 @@
             vazio.textContent = 'Sem filtros';
             vazio.style.fontSize = '11px';
             vazio.style.opacity = '0.8';
+            vazio.style.color = presentationDark ? '#fff' : '#111';
             filters.appendChild(vazio);
+        }
+
+        function cloneOption(value) {
+            if (Array.isArray(value)) return value.map(cloneOption);
+            if (value && typeof value === 'object') {
+                const out = {};
+                Object.keys(value).forEach(k => {
+                    out[k] = cloneOption(value[k]);
+                });
+                return out;
+            }
+            return value;
+        }
+
+        function applyAxisTheme(axis) {
+            const applyOne = (ax) => {
+                if (!ax) return;
+                ax.axisLabel = { ...(ax.axisLabel || {}), color: ax.axisLabel?.color || '#cfcfcf' };
+                ax.axisLine = {
+                    ...(ax.axisLine || {}),
+                    lineStyle: { ...(ax.axisLine?.lineStyle || {}), color: ax.axisLine?.lineStyle?.color || 'rgba(255,255,255,0.45)' }
+                };
+                ax.splitLine = {
+                    ...(ax.splitLine || {}),
+                    lineStyle: { ...(ax.splitLine?.lineStyle || {}), color: ax.splitLine?.lineStyle?.color || 'rgba(255,255,255,0.08)' }
+                };
+                ax.nameTextStyle = { ...(ax.nameTextStyle || {}), color: ax.nameTextStyle?.color || '#cfcfcf' };
+            };
+            if (Array.isArray(axis)) axis.forEach(applyOne);
+            else applyOne(axis);
+        }
+
+        function applyLegendTheme(legend) {
+            const applyOne = (lg) => {
+                if (!lg) return;
+                lg.textStyle = { ...(lg.textStyle || {}), color: lg.textStyle?.color || '#e6e6e6' };
+            };
+            if (Array.isArray(legend)) legend.forEach(applyOne);
+            else applyOne(legend);
+        }
+
+        function applyPresentationTheme(option) {
+            if (!presentationDark || !option) return option;
+            const themed = cloneOption(option);
+            themed.backgroundColor = '#0b0d12';
+            themed.textStyle = { ...(themed.textStyle || {}), color: themed.textStyle?.color || '#e6e6e6' };
+            if (themed.title) {
+                if (Array.isArray(themed.title)) {
+                    themed.title = themed.title.map(t => ({ ...t, textStyle: { ...(t?.textStyle || {}), color: t?.textStyle?.color || '#e6e6e6' } }));
+                } else {
+                    themed.title = { ...themed.title, textStyle: { ...(themed.title.textStyle || {}), color: themed.title.textStyle?.color || '#e6e6e6' } };
+                }
+            }
+            applyLegendTheme(themed.legend);
+            applyAxisTheme(themed.xAxis);
+            applyAxisTheme(themed.yAxis);
+            applyAxisTheme(themed.radar);
+            if (themed.tooltip) {
+                if (Array.isArray(themed.tooltip)) {
+                    themed.tooltip = themed.tooltip.map(t => ({ ...t, backgroundColor: 'rgba(20,20,20,0.9)', borderColor: 'rgba(255,255,255,0.15)', textStyle: { ...(t?.textStyle || {}), color: '#fff' } }));
+                } else {
+                    themed.tooltip = { ...themed.tooltip, backgroundColor: 'rgba(20,20,20,0.9)', borderColor: 'rgba(255,255,255,0.15)', textStyle: { ...(themed.tooltip.textStyle || {}), color: '#fff' } };
+                }
+            }
+            if (themed.series) {
+                themed.series = themed.series.map(s => {
+                    if (!s) return s;
+                    const ns = { ...s };
+                    if (ns.label) ns.label = { ...ns.label, color: ns.label?.color || '#e6e6e6' };
+                    if (ns.emphasis?.label) ns.emphasis = { ...(ns.emphasis || {}), label: { ...ns.emphasis.label, color: ns.emphasis.label?.color || '#fff' } };
+                    if (ns.levels) {
+                        ns.levels = ns.levels.map(l => {
+                            if (!l) return l;
+                            const nl = { ...l };
+                            if (nl.label) nl.label = { ...nl.label, color: '#f5f5f5' };
+                            return nl;
+                        });
+                    }
+                    return ns;
+                });
+            }
+            return themed;
+        }
+
+        function setPresentationTheme(isDark, render = true) {
+            presentationDark = !!isDark;
+            const overlay = document.getElementById('presentationOverlay');
+            if (overlay) overlay.classList.toggle('presentation-dark', presentationDark);
+            const btn = document.getElementById('presentationThemeToggle');
+            if (btn) btn.textContent = presentationDark ? 'Modo claro' : 'Modo escuro';
+            if (presentationActive && render) showPresentationChart(presentationIndex);
         }
 
         function showPresentationChart(idx) {
@@ -1700,7 +1845,8 @@
             presentationChartInstance = echarts.init(chartHost);
             const src = charts[chartId];
             const option = src && src.getOption ? src.getOption() : null;
-            if (option) presentationChartInstance.setOption(option, { notMerge: true });
+            const themedOption = applyPresentationTheme(option);
+            if (themedOption) presentationChartInstance.setOption(themedOption, { notMerge: true });
             if (chartId === 'chartFalhaEspecialidadeHero' && window.falhaHeroMeta && window.falhaHeroMeta.attach) {
                 try {
                     window.falhaHeroMeta.attach(presentationChartInstance);
@@ -1720,6 +1866,7 @@
 
             if (presentationActive) {
                 overlay.classList.remove('hidden');
+                setPresentationTheme(presentationDark, false);
                 buildPresentationList();
                 presentationIndex = 0;
                 showPresentationChart(0);
