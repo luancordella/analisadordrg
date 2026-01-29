@@ -53,6 +53,8 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: relative;
+            top: -4px;
         }
 
         .logo-wrap img {
@@ -381,7 +383,7 @@
         .presentation-overlay {
             position: fixed;
             inset: 0;
-            background: #0b0d12;
+            background: #fff;
             z-index: 10000;
             display: flex;
             flex-direction: column;
@@ -395,9 +397,9 @@
             align-items: center;
             justify-content: space-between;
             padding: 10px 16px;
-            background: rgba(10, 12, 18, 0.85);
-            color: #fff;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: #fff;
+            color: #1b1b1b;
+            border-bottom: 1px solid #e5e5e5;
         }
 
         .presentation-title {
@@ -415,15 +417,15 @@
         .presentation-btn {
             padding: 6px 12px;
             border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.12);
-            color: #fff;
+            border: 1px solid rgba(0,0,0,0.15);
+            background: #f5f5f5;
+            color: #1b1b1b;
             cursor: pointer;
             font-size: 12px;
         }
 
         .presentation-btn:hover {
-            background: rgba(255,255,255,0.18);
+            background: #ededed;
         }
 
         .presentation-filters {
@@ -437,8 +439,8 @@
         .presentation-filters select {
             padding: 6px 10px;
             border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.25);
-            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(0,0,0,0.18);
+            background: #fff;
             font-size: 12px;
         }
 
@@ -460,9 +462,9 @@
             width: 44px;
             height: 44px;
             border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.12);
-            color: #fff;
+            border: 1px solid rgba(0,0,0,0.18);
+            background: #f5f5f5;
+            color: #1b1b1b;
             font-size: 22px;
             cursor: pointer;
             display: flex;
@@ -470,7 +472,7 @@
             justify-content: center;
         }
 
-        .presentation-nav:hover { background: rgba(255,255,255,0.2); }
+        .presentation-nav:hover { background: #ededed; }
 
         .presentation-nav.prev { left: 16px; }
         .presentation-nav.next { right: 16px; }
@@ -650,17 +652,13 @@
         .slide { margin-bottom: 15px; }
 
         body.presentation-mode {
-            background:
-                radial-gradient(circle at 12% 18%, rgba(46,125,50,0.35), transparent 55%),
-                radial-gradient(circle at 88% 22%, rgba(129,199,132,0.35), transparent 52%),
-                radial-gradient(circle at 40% 88%, rgba(102,187,106,0.35), transparent 60%),
-                #0b0d12;
+            background: #fff;
             overflow: hidden;
         }
 
         body.presentation-mode .header {
-            background: rgba(10, 12, 18, 0.55);
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: #fff;
+            border-bottom: 1px solid #e5e5e5;
             backdrop-filter: blur(16px);
         }
 
@@ -764,6 +762,7 @@
                     <div>
                         <span id="filteredCount" style="color: #666; margin-right: 15px;"></span>
                         <button type="button" class="btn btn-secondary" id="toggleFiltersBtn">Ocultar filtros</button>
+                        <button type="button" class="btn btn-secondary" id="outlineCsvBtn">Gerar outline IA</button>
                     </div>
                 </div>
                 <div class="filters-grid">
@@ -1153,6 +1152,7 @@
             rebuildDeck();
             montarToolbars();
             const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+            const outlineCsvBtn = document.getElementById('outlineCsvBtn');
             if (toggleFiltersBtn) {
                 toggleFiltersBtn.addEventListener('click', () => {
                     const grid = document.querySelector('.filters-grid');
@@ -1162,6 +1162,9 @@
                     if (buttons) buttons.classList.toggle('hidden', ocultar);
                     toggleFiltersBtn.textContent = ocultar ? 'Mostrar filtros' : 'Ocultar filtros';
                 });
+            }
+            if (outlineCsvBtn) {
+                outlineCsvBtn.addEventListener('click', () => exportarCSVComOutline());
             }
             const prevBtn = document.getElementById('presentationPrev');
             const nextBtn = document.getElementById('presentationNext');
@@ -1659,7 +1662,10 @@
 
         function abrirSeletorJson() {
             const input = document.getElementById('fileInput');
-            if (input) input.click();
+            if (input) {
+                input.value = '';
+                input.click();
+            }
         }
 
         // Carregar arquivo
@@ -1671,10 +1677,15 @@
             reader.onload = function(e) {
                 try {
                     const json = JSON.parse(e.target.result);
-                    inicializarDashboard(json);
+                    try {
+                        inicializarDashboard(json);
+                    } catch (err) {
+                        alert('Erro ao inicializar dashboard: ' + err.message);
+                    }
                 } catch (err) {
                     alert('Erro ao ler JSON: ' + err.message);
                 }
+                document.getElementById('fileInput').value = '';
             };
             reader.readAsText(file);
         });
@@ -2921,6 +2932,327 @@
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `drg_filtrado_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function exportarCSVComOutline() {
+            const dados = dadosFiltrados;
+            if (!dados.length) {
+                alert('Sem dados filtrados para exportar.');
+                return;
+            }
+
+            const contar = (getKey) => {
+                const m = {};
+                dados.forEach(r => {
+                    const k = getKey(r);
+                    if (!k) return;
+                    m[k] = (m[k] || 0) + 1;
+                });
+                return m;
+            };
+
+            const datas = dados.map(r => r.dataInternacao?.split(' ')[0]).filter(Boolean).sort();
+            const periodo = datas.length ? `${datas[0]} a ${datas[datas.length - 1]}` : 'N/A';
+            const total = dados.length;
+            const comFalha = dados.filter(r => (Array.isArray(r.falha_estrutura_descricoes) && r.falha_estrutura_descricoes.length)
+                || (Array.isArray(r.causaExterna) && r.causaExterna.length)).length;
+            const taxaFalha = total ? ((comFalha / total) * 100).toFixed(1) : '0.0';
+
+            const falhaMap = {};
+            dados.forEach(r => {
+                const falhas = Array.isArray(r.falha_estrutura_descricoes)
+                    ? r.falha_estrutura_descricoes
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.descricao).filter(Boolean) : []);
+                falhas.forEach(f => {
+                    falhaMap[f] = (falhaMap[f] || 0) + 1;
+                });
+            });
+            const topFalhas = Object.entries(falhaMap).sort((a,b) => b[1]-a[1]).slice(0, 10);
+
+            const espFalha = {};
+            dados.forEach(r => {
+                const esp = r.medico_responsavel_especialidade || r.medico?.[0]?.especialidade || 'Sem Especialidade';
+                const falhas = Array.isArray(r.falha_estrutura_descricoes)
+                    ? r.falha_estrutura_descricoes
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.descricao).filter(Boolean) : []);
+                if (!falhas.length) return;
+                espFalha[esp] = (espFalha[esp] || 0) + falhas.length;
+            });
+            const topEspFalha = Object.entries(espFalha).sort((a,b) => b[1]-a[1]).slice(0, 8);
+
+            const mdcMap = contar(r => r.drgBrasilRefinado?.mdc?.descricao || r.mdc_descricao || 'Sem MDC');
+            const topMdc = Object.entries(mdcMap).sort((a,b) => b[1]-a[1]).slice(0, 5);
+
+            const outline = [
+                `OBJETIVO: Gerar uma apresentação executiva HTML a partir dos dados filtrados, com foco em falhas de estrutura/processo.`,
+                `FORMATO DE SAIDA: Somente HTML + CSS (opcional JS leve). NÃO gere Python ou scripts.`,
+                `REQUISITO DE NAVEGACAO: Sem barra de rolagem. Slides devem trocar com transição animada.`,
+                `ESTILO DE TRANSICAO: Rolo de filme horizontal / cilindro girando com as imagens.`,
+                `LOGO: Incluir o logo "image_af2a80.png" no canto superior esquerdo em todas as telas, com fundo branco, e fazer o logo acompanhar a transição dos slides.`,
+                `ENQUADRAMENTO: Garantir que todo o conteúdo fique 100% encaixado na tela, sem zoom exagerado e sem elementos fora da área visível.`,
+                `AREA DO LOGO: Delimitar uma área fixa para o logo, sem sobrepor o conteúdo (o logo nunca deve cobrir textos ou gráficos).`,
+                ``,
+                `CONTEXTO E PERIODO:`,
+                `- Total de registros analisados: ${total}`,
+                `- Periodo: ${periodo}`,
+                `- Registros com falha: ${comFalha} (${taxaFalha}%)`,
+                ``,
+                `HIGHLIGHTS (priorizar no sumario executivo):`,
+                `- Top falhas: ${topFalhas.map(([f,v]) => `${f} (${v})`).join('; ') || 'N/A'}`,
+                `- Especialidades mais impactadas: ${topEspFalha.map(([e,v]) => `${e} (${v})`).join('; ') || 'N/A'}`,
+                `- MDCs mais frequentes: ${topMdc.map(([m,v]) => `${m} (${v})`).join('; ') || 'N/A'}`,
+                ``,
+                `OUTLINE SUGERIDO (HTML deck):`,
+                `1) Capa: titulo, periodo, total de registros e objetivo.`,
+                `2) Sumario executivo: 3-5 insights principais (falhas, tendencias, impacto).`,
+                `3) Panorama de internacoes: volume mensal e perfil geral (sexo/faixa etaria).`,
+                `4) Falhas de estrutura/processo: mapa visual por especialidade e ranking das falhas.`,
+                `5) Especialidades criticas: comparativo de falhas por especialidade (top 5).`,
+                `6) MDC e falhas: onde se concentram as falhas por categoria clinica.`,
+                `7) Desempenho (permanencia): Ideal vs Proximo vs Acima e implicacoes.`,
+                `8) Conclusoes e recomendacoes: acoes imediatas, curto prazo e monitoramento.`,
+                ``,
+                `DIRETRIZES VISUAIS:`,
+                `- Estilo premium/Apple Vision Pro, cores neon, alto contraste, foco em clareza.`,
+                `- Use graficos: sunburst (falhas por especialidade), barras top, linhas por mes.`,
+                `- Cada slide com 1 mensagem-chave + 1 grafico principal.`,
+                ``,
+                `INSIGHTS ESPERADOS (orientar a analise):`,
+                `- Onde ha concentracao de falhas por especialidade e por MDC.`,
+                `- Crescimento/queda de falhas ao longo do periodo.`,
+                `- Relação entre falhas e permanencia acima do ideal.`,
+                `- Oportunidades de melhoria e acoes corretivas priorizadas.`
+            ].join('\n');
+
+            const filtroResumo = (() => {
+                const partes = [];
+                const v = (id) => (document.getElementById(id)?.value || '').trim();
+                const vmulti = (id) => Array.from(document.getElementById(id)?.selectedOptions || []).map(o => o.value).filter(Boolean);
+                const add = (label, value) => { if (value) partes.push(`${label}: ${value}`); };
+                add('Periodo Inicio', v('filterDataInicio'));
+                add('Periodo Fim', v('filterDataFim'));
+                add('Situacao', v('filterSituacao'));
+                add('Hospital', v('filterHospital'));
+                add('MDC', v('filterMDC'));
+                const esp = vmulti('filterEspecialidade'); if (esp.length) add('Especialidade', esp.join(', '));
+                const falha = vmulti('filterFalhaEstrutura'); if (falha.length) add('Falha Estrutura', falha.join(', '));
+                add('Sexo', v('filterSexo'));
+                add('Faixa Etaria', v('filterIdade'));
+                add('Peso', v('filterPeso'));
+                add('Idoso Fragil', v('filterIdosoFragil'));
+                add('Condicao Grave', v('filterCondicaoGrave'));
+                add('Ventilacao', v('filterVentilacao'));
+                add('CID', v('filterCID'));
+                add('DRG', v('filterDRG'));
+                add('Condicao Alta', v('filterCondicaoAlta'));
+                add('Estado', v('filterEstado'));
+                add('Cidade', v('filterCidade'));
+                add('Plano', v('filterPlano'));
+                return partes.join(' | ') || 'Sem filtros aplicados';
+            })();
+
+            const serie = (map) => Object.entries(map).sort((a,b) => a[0].localeCompare(b[0]))
+                .map(([k,v]) => `${k}=${v}`).join('; ');
+
+            const internMes = {};
+            dados.forEach(r => {
+                const mes = r.dataInternacao?.substring(0,7);
+                if (!mes) return;
+                internMes[mes] = (internMes[mes] || 0) + 1;
+            });
+
+            const permMes = {};
+            const cmiMes = {};
+            const indMes = {};
+            dados.forEach(r => {
+                const mes = r.dataInternacao?.substring(0,7);
+                if (!mes) return;
+                if (!permMes[mes]) permMes[mes] = { rs:0, rn:0, ps:0, pn:0 };
+                const real = Number(r.permanenciaReal);
+                const prev = Number(r.permanenciaPrevistaNaInternacao);
+                if (Number.isFinite(real)) { permMes[mes].rs += real; permMes[mes].rn++; }
+                if (Number.isFinite(prev)) { permMes[mes].ps += prev; permMes[mes].pn++; }
+
+                const peso = Number(r.drgBrasilRefinado?.peso ?? r.drg_peso);
+                if (Number.isFinite(peso)) {
+                    if (!cmiMes[mes]) cmiMes[mes] = { s:0, n:0 };
+                    cmiMes[mes].s += peso; cmiMes[mes].n += 1;
+                }
+
+                if (!indMes[mes]) indMes[mes] = { total:0, grave:0, vent:0, rein:0, idoso:0 };
+                indMes[mes].total++;
+                if (r.variaveis?.caGrave === 'S' || r.ca_grave === 'S' || r.condicaoAdquiridaGrave === 'S' || r.condicao_adquirida_grave === 'S') indMes[mes].grave++;
+                if (r.ventilacaoMecanica === 'S') indMes[mes].vent++;
+                if (r.reinternacao === 'S') indMes[mes].rein++;
+                if (r.variaveis?.idosoFragil === 'S' || r.idoso_fragil === 'S') indMes[mes].idoso++;
+            });
+
+            const permMesSerie = Object.entries(permMes).sort((a,b)=>a[0].localeCompare(b[0]))
+                .map(([m,v]) => {
+                    const real = v.rn ? (v.rs / v.rn).toFixed(1) : 0;
+                    const prev = v.pn ? (v.ps / v.pn).toFixed(1) : 0;
+                    return `${m}:real=${real},prev=${prev}`;
+                }).join('; ');
+
+            const cmiMesSerie = Object.entries(cmiMes).sort((a,b)=>a[0].localeCompare(b[0]))
+                .map(([m,v]) => `${m}:${v.n ? (v.s/v.n).toFixed(3) : 0}`).join('; ');
+
+            const indMesSerie = Object.entries(indMes).sort((a,b)=>a[0].localeCompare(b[0]))
+                .map(([m,v]) => {
+                    const pct = (x) => v.total ? ((x/v.total)*100).toFixed(1) : 0;
+                    return `${m}:grave=${pct(v.grave)}%,vent=${pct(v.vent)}%,rein=${pct(v.rein)}%,idoso=${pct(v.idoso)}%`;
+                }).join('; ');
+
+            const falhaMes = {};
+            dados.forEach(r => {
+                const falhas = Array.isArray(r.falha_estrutura_descricoes)
+                    ? r.falha_estrutura_descricoes
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.descricao).filter(Boolean) : []);
+                if (!falhas.length) return;
+                const mes = r.dataInternacao?.substring(0,7);
+                if (!mes) return;
+                falhaMes[mes] = (falhaMes[mes] || 0) + 1;
+            });
+
+            const origemMap = { 'A': 'Ambos', 'H': 'Hospital', 'R': 'Rede/Operadora' };
+            const falhaOrigem = {};
+            dados.forEach(r => {
+                const origens = Array.isArray(r.falha_estrutura_origens)
+                    ? r.falha_estrutura_origens
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.origem).filter(Boolean) : []);
+                origens.forEach(o => {
+                    const label = origemMap[o] ? `${o}-${origemMap[o]}` : (o || 'Sem Origem');
+                    falhaOrigem[label] = (falhaOrigem[label] || 0) + 1;
+                });
+            });
+
+            const dataHeaders = [
+                'id','situacao','situacao_label','data_internacao','data_alta','mes_internacao',
+                'hospital','estado','cidade','plano','sexo','idade','faixa_etaria',
+                'especialidade','mdc','drg_descricao','drg_peso',
+                'permanencia_real','permanencia_prevista','permanencia_status',
+                'condicao_alta','ventilacao_mecanica','reinternacao',
+                'idoso_fragil','condicao_grave',
+                'falha_tem','falha_qtd','falha_principal','falha_descricoes','falha_origens'
+            ];
+
+            const colunaDesc = {
+                id: 'ID do registro de internação.',
+                situacao: 'Código da situação (1 Admissional, 2 Prorrogação, 3 Alta, 4 Autorização).',
+                situacao_label: 'Situação em texto.',
+                data_internacao: 'Data de internação (YYYY-MM-DD).',
+                data_alta: 'Data de alta (YYYY-MM-DD).',
+                mes_internacao: 'Mês da internação (YYYY-MM).',
+                hospital: 'Hospital de internação.',
+                estado: 'UF do paciente.',
+                cidade: 'Cidade do paciente.',
+                plano: 'Plano do beneficiário.',
+                sexo: 'Sexo do beneficiário.',
+                idade: 'Idade em anos.',
+                faixa_etaria: 'Faixa etária (0-17,18-40,41-60,61-80,80+).',
+                especialidade: 'Especialidade do médico responsável.',
+                mdc: 'MDC (Major Diagnostic Category).',
+                drg_descricao: 'Descrição do DRG.',
+                drg_peso: 'Peso relativo do DRG.',
+                permanencia_real: 'Permanência real (dias).',
+                permanencia_prevista: 'Permanência prevista na internação (dias).',
+                permanencia_status: 'Status: Ideal / Próximo do ideal / Acima / Sem Dados.',
+                condicao_alta: 'Condição de alta.',
+                ventilacao_mecanica: 'Ventilação mecânica (S/N).',
+                reinternacao: 'Reinternação (S/N).',
+                idoso_fragil: 'Idoso frágil (S/N).',
+                condicao_grave: 'Condição grave (S/N).',
+                falha_tem: 'Se houve falha de estrutura/processo (S/N).',
+                falha_qtd: 'Quantidade de falhas registradas.',
+                falha_principal: 'Principal falha (descrição).',
+                falha_descricoes: 'Lista de falhas (separadas por |).',
+                falha_origens: 'Origem das falhas (A-Ambos, H-Hospital, R-Rede/Operadora).'
+            };
+
+            const origemMapDetalhe = { 'A': 'A-Ambos', 'H': 'H-Hospital', 'R': 'R-Rede/Operadora' };
+            const linhasDetalhe = [];
+            dados.forEach(r => {
+                const falhas = Array.isArray(r.falha_estrutura_descricoes)
+                    ? r.falha_estrutura_descricoes
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.descricao).filter(Boolean) : []);
+                const origens = Array.isArray(r.falha_estrutura_origens)
+                    ? r.falha_estrutura_origens
+                    : (Array.isArray(r.causaExterna) ? r.causaExterna.map(c => c?.origem).filter(Boolean) : []);
+                const falhaTem = falhas.length ? 'S' : 'N';
+                const linha = [
+                    `id=${r.id}`,
+                    `situacao=${r.situacao}`,
+                    `situacao_label=${situacoes[r.situacao] || r.situacao}`,
+                    `data_internacao=${r.dataInternacao?.split(' ')[0] || ''}`,
+                    `data_alta=${r.dataAlta?.split(' ')[0] || ''}`,
+                    `mes_internacao=${r.dataInternacao?.substring(0,7) || ''}`,
+                    `hospital=${r.hospital?.nome || ''}`,
+                    `estado=${r.estado || ''}`,
+                    `cidade=${r.cidade || ''}`,
+                    `plano=${r.beneficiario?.plano || ''}`,
+                    `sexo=${r.beneficiario?.sexo || ''}`,
+                    `idade=${r.beneficiario?.idadeEmAnos || ''}`,
+                    `faixa_etaria=${r.faixaEtaria || ''}`,
+                    `especialidade=${r.medico_responsavel_especialidade || r.medico?.[0]?.especialidade || ''}`,
+                    `mdc=${r.drgBrasilRefinado?.mdc?.descricao || r.mdc_descricao || ''}`,
+                    `drg_descricao=${r.drgBrasilRefinado?.descricao || r.drg_descricao || ''}`,
+                    `drg_peso=${r.drgBrasilRefinado?.peso ?? r.drg_peso ?? ''}`,
+                    `permanencia_real=${r.permanenciaReal ?? ''}`,
+                    `permanencia_prevista=${r.permanenciaPrevistaNaInternacao ?? ''}`,
+                    `permanencia_status=${r.permanencia_status || ''}`,
+                    `condicao_alta=${r.condicaoAlta || ''}`,
+                    `ventilacao_mecanica=${r.ventilacaoMecanica || ''}`,
+                    `reinternacao=${r.reinternacao || ''}`,
+                    `idoso_fragil=${r.variaveis?.idosoFragil || r.idoso_fragil || ''}`,
+                    `condicao_grave=${(r.variaveis?.caGrave === 'S' || r.ca_grave === 'S' || r.condicaoAdquiridaGrave === 'S' || r.condicao_adquirida_grave === 'S') ? 'S' : 'N'}`,
+                    `falha_tem=${falhaTem}`,
+                    `falha_qtd=${falhas.length}`,
+                    `falha_principal=${r.falha_estrutura_principal || ''}`,
+                    `falha_descricoes=${falhas.join(' | ')}`,
+                    `falha_origens=${origens.map(o => origemMapDetalhe[o] || o).join(' | ')}`
+                ].join(' | ');
+                linhasDetalhe.push(linha);
+            });
+
+            const texto = [
+                '=== PROMPT OUTLINE PARA IA ===',
+                outline,
+                '',
+                '=== FILTROS APLICADOS ===',
+                filtroResumo,
+                '',
+                '=== RESUMO ===',
+                `Total=${total}; Periodo=${periodo}; ComFalha=${comFalha} (${taxaFalha}%)`,
+                '',
+                '=== TOP FALHAS ===',
+                topFalhas.map(([f,v]) => `${f} (${v})`).join('; ') || 'N/A',
+                '',
+                '=== TOP ESPECIALIDADES COM FALHA ===',
+                topEspFalha.map(([e,v]) => `${e} (${v})`).join('; ') || 'N/A',
+                '',
+                '=== TOP MDC ===',
+                topMdc.map(([m,v]) => `${m} (${v})`).join('; ') || 'N/A',
+                '',
+                '=== SERIES (AGREGADOS) ===',
+                `Internacoes por mes: ${serie(internMes) || 'N/A'}`,
+                `Permanencia real vs prevista (mes): ${permMesSerie || 'N/A'}`,
+                `CMI por mes: ${cmiMesSerie || 'N/A'}`,
+                `Indicadores por mes: ${indMesSerie || 'N/A'}`,
+                `Falhas por mes: ${serie(falhaMes) || 'N/A'}`,
+                `Falhas por origem: ${serie(falhaOrigem) || 'N/A'}`,
+                '',
+                '=== EXPLICACAO DAS COLUNAS (DADOS DETALHADOS) ===',
+                dataHeaders.map(h => `${h}: ${colunaDesc[h] || ''}`).join('\n'),
+                '',
+                '=== DADOS DETALHADOS (UM REGISTRO POR LINHA) ===',
+                linhasDetalhe.join('\n')
+            ].join('\n');
+
+            const blob = new Blob([texto], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `drg_outline_${new Date().toISOString().split('T')[0]}.txt`;
             link.click();
         }
     </script>
