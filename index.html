@@ -550,6 +550,22 @@
             height: 100%;
         }
 
+        .presentation-falha-layout {
+            display: flex;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .presentation-falha-chart {
+            flex: 1 1 70%;
+            height: 100%;
+        }
+
+        .presentation-falha-info {
+            flex: 0 0 30%;
+            height: 100%;
+        }
+
         .presentation-nav {
             position: absolute;
             top: 50%;
@@ -1657,13 +1673,40 @@
             renderPresentationControls(chartId);
 
             if (presentationChartInstance) {
+                if (presentationChartInstance.__pulseState && presentationChartInstance.__pulseState.timer) {
+                    clearInterval(presentationChartInstance.__pulseState.timer);
+                }
                 try { presentationChartInstance.dispose(); } catch (e) {}
                 presentationChartInstance = null;
             }
-            presentationChartInstance = echarts.init(canvas);
+            canvas.innerHTML = '';
+            let chartHost = canvas;
+            if (chartId === 'chartFalhaEspecialidadeHero') {
+                const wrap = document.createElement('div');
+                wrap.className = 'presentation-falha-layout';
+                const chartBox = document.createElement('div');
+                chartBox.className = 'presentation-falha-chart';
+                chartBox.style.width = '100%';
+                chartBox.style.height = '100%';
+                const info = document.createElement('div');
+                info.className = 'falha-hero-info presentation-falha-info';
+                const sourceInfo = document.querySelector('.falha-hero-info');
+                if (sourceInfo) info.innerHTML = sourceInfo.innerHTML;
+                wrap.appendChild(chartBox);
+                wrap.appendChild(info);
+                canvas.appendChild(wrap);
+                chartHost = chartBox;
+            }
+            presentationChartInstance = echarts.init(chartHost);
             const src = charts[chartId];
             const option = src && src.getOption ? src.getOption() : null;
             if (option) presentationChartInstance.setOption(option, { notMerge: true });
+            if (chartId === 'chartFalhaEspecialidadeHero' && window.falhaHeroMeta && window.falhaHeroMeta.attach) {
+                try {
+                    window.falhaHeroMeta.attach(presentationChartInstance);
+                    if (window.falhaHeroMeta.renderDefault) window.falhaHeroMeta.renderDefault();
+                } catch (e) {}
+            }
         }
 
         function togglePresentation() {
@@ -2802,7 +2845,14 @@
                         topFalhaCount: info.topFalhaCount,
                         percentTotal: totalAllFalhas ? (info.total / totalAllFalhas) * 100 : 0,
                         topFalhas: info.entries.slice(0, 3),
-                        children: info.entries.map(([f, v]) => ({
+                        children: info.entries.map(([f, v], idx) => {
+                            const maxV = info.entries[0]?.[1] || v || 1;
+                            const minV = info.entries[info.entries.length - 1]?.[1] || v || 1;
+                            const span = Math.max(1, maxV - minV);
+                            const norm = (v - minV) / span;
+                            const opacity = 0.55 + 0.45 * norm;
+                            const rankFactor = info.entries.length > 1 ? (1 - idx / (info.entries.length - 1)) : 1;
+                            return ({
                             name: f,
                             value: v,
                             esp,
@@ -2816,8 +2866,13 @@
                             espCountGlobal: falhaGlobal[f]?.espSet ? falhaGlobal[f].espSet.size : 0,
                             falhaTopEsp: falhaGlobalTopEsp[f] || [],
                             percentEsp: info.total ? (v / info.total) * 100 : 0,
-                            percentTotal: totalAllFalhas ? (v / totalAllFalhas) * 100 : 0
-                        }))
+                            percentTotal: totalAllFalhas ? (v / totalAllFalhas) * 100 : 0,
+                            itemStyle: {
+                                opacity,
+                                borderWidth: 1 + 1.2 * rankFactor
+                            }
+                        });
+                        })
                     }));
 
                 if (!dataHero.length) {
@@ -2885,6 +2940,7 @@
                             radius: ['16%', '94%'],
                             center: ['38%', '50%'],
                             minAngle: 3,
+                            nodeClick: 'rootToNode',
                             data: dataHero,
                             sort: null,
                             label: { show: false },
@@ -2900,6 +2956,9 @@
                                     shadowOffsetX: 0,
                                     shadowOffsetY: 0
                                 }
+                            },
+                            blur: {
+                                itemStyle: { opacity: 1 }
                             },
                             labelLayout: { hideOverlap: true },
                             levels: levelsBase,
@@ -3039,11 +3098,18 @@
                         if (!chart) return;
                         chart.off('mouseover');
                         chart.off('globalout');
+                        chart.off('click');
                         chart.on('mouseover', (p) => {
                             renderInfo(p);
                             const d = p && p.data ? p.data : null;
                             if (d && (d.esp || d.falha)) setFalhaLabels(chart, true, d.esp || null);
                             if (p && p.dataIndex !== undefined) startPulse(chart, p.dataIndex);
+                        });
+                        chart.on('click', (p) => {
+                            if (!p || !p.data) return;
+                            renderInfo(p);
+                            const d = p.data;
+                            if (d.esp || d.falha) setFalhaLabels(chart, true, d.esp || null);
                         });
                         chart.on('globalout', () => {
                             stopPulse(chart);
