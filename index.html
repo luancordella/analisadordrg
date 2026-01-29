@@ -283,6 +283,101 @@
             height: 520px;
         }
 
+        .falha-hero-layout {
+            display: flex;
+            gap: 14px;
+            align-items: stretch;
+            height: 520px;
+        }
+
+        .falha-hero-layout .chart-wrapper {
+            flex: 1 1 66%;
+            height: 100%;
+            margin-left: -8px;
+        }
+
+        .falha-hero-info {
+            flex: 0 0 34%;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .falha-hero-info::before {
+            content: '';
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            width: 4px;
+            height: 28px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #00E5FF, #00C853);
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+        }
+
+        .falha-hero-info-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111;
+            letter-spacing: 0.2px;
+            padding-left: 14px;
+        }
+
+        .falha-hero-info-sub {
+            font-size: 11px;
+            color: #666;
+            padding-left: 14px;
+        }
+
+        .falha-hero-info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .falha-hero-info-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 12px;
+            line-height: 1.3;
+            padding: 6px 0;
+            border-bottom: 1px dashed rgba(0,0,0,0.08);
+        }
+
+        .falha-hero-info-row span { color: #666; }
+        .falha-hero-info-row strong { color: #111; font-weight: 700; text-align: right; }
+        .falha-hero-info-row:last-child { border-bottom: none; }
+
+        .falha-hero-info-highlight {
+            font-size: 16px;
+            font-weight: 800;
+            color: #00c853;
+        }
+
+        .falha-hero-modal {
+            display: flex;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .falha-hero-modal-chart {
+            flex: 1 1 70%;
+            height: 100%;
+        }
+
+        .falha-hero-modal .falha-hero-info {
+            flex: 0 0 30%;
+            height: 100%;
+        }
+
         .chart-title {
             font-size: 14px;
             font-weight: 600;
@@ -1041,7 +1136,18 @@
                     <div class="charts-grid charts-grid-fill">
                 <div class="chart-container chart-hero">
                     <div class="chart-title">Falhas por Especialidade (Mapa Visual)</div>
-                    <div class="chart-wrapper"><div id="chartFalhaEspecialidadeHero" style="width:100%;height:100%;"></div></div>
+                    <div class="falha-hero-layout">
+                        <div class="chart-wrapper"><div id="chartFalhaEspecialidadeHero" style="width:100%;height:100%;"></div></div>
+                        <div class="falha-hero-info" id="falhaHeroInfo">
+                            <div class="falha-hero-info-title">Detalhes da Falha</div>
+                            <div class="falha-hero-info-sub">Passe o mouse sobre o mapa para ver os detalhes completos.</div>
+                            <div class="falha-hero-info-grid">
+                                <div class="falha-hero-info-row"><span>Especialidades exibidas</span><strong>-</strong></div>
+                                <div class="falha-hero-info-row"><span>Falhas totais</span><strong>-</strong></div>
+                                <div class="falha-hero-info-row"><span>Falhas distintas</span><strong>-</strong></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="chart-container">
                     <div class="chart-title">Falhas por Mes (Registros)</div>
@@ -1362,10 +1468,32 @@
 
             const body = document.getElementById('chartModalBody');
             body.innerHTML = '';
-            const canvas = document.createElement('div');
-            canvas.style.width = '100%';
-            canvas.style.height = '100%';
-            body.appendChild(canvas);
+            let canvas = null;
+            if (chartId === 'chartFalhaEspecialidadeHero') {
+                const wrap = document.createElement('div');
+                wrap.className = 'falha-hero-modal';
+
+                const chartBox = document.createElement('div');
+                chartBox.className = 'falha-hero-modal-chart';
+                chartBox.style.width = '100%';
+                chartBox.style.height = '100%';
+
+                const info = document.createElement('div');
+                info.className = 'falha-hero-info';
+                info.id = 'falhaHeroInfoFullscreen';
+                const sourceInfo = document.querySelector('.falha-hero-info');
+                if (sourceInfo) info.innerHTML = sourceInfo.innerHTML;
+
+                wrap.appendChild(chartBox);
+                wrap.appendChild(info);
+                body.appendChild(wrap);
+                canvas = chartBox;
+            } else {
+                canvas = document.createElement('div');
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                body.appendChild(canvas);
+            }
 
             if (chartModalInstance) {
                 try { chartModalInstance.dispose(); } catch (e) {}
@@ -1388,6 +1516,12 @@
                     option.series[0].layoutIterations = Math.max(option.series[0].layoutIterations || 32, 48);
                 }
                 chartModalInstance.setOption(option, { notMerge: true });
+                if (chartId === 'chartFalhaEspecialidadeHero' && window.falhaHeroMeta && window.falhaHeroMeta.attach) {
+                    try {
+                        window.falhaHeroMeta.attach(chartModalInstance);
+                        if (window.falhaHeroMeta.renderDefault) window.falhaHeroMeta.renderDefault();
+                    } catch (e) {}
+                }
             }
 
             setTimeout(() => {
@@ -1403,6 +1537,9 @@
                 try { document.exitFullscreen(); } catch (e) {}
             }
             if (chartModalInstance) {
+                if (chartModalInstance.__pulseState && chartModalInstance.__pulseState.timer) {
+                    clearInterval(chartModalInstance.__pulseState.timer);
+                }
                 try { chartModalInstance.dispose(); } catch (e) {}
                 chartModalInstance = null;
             }
@@ -2606,65 +2743,327 @@
                     });
                 });
 
-                const espTotais = Object.entries(espFalha).map(([esp, falhas]) => {
-                    const total = Object.values(falhas).reduce((a, b) => a + b, 0);
-                    return [esp, total];
-                });
-                const espTop = new Set(aplicarTop(espTotais.sort((a, b) => b[1] - a[1]), 'chartFalhaEspecialidadeHero').map(e => e[0]));
+                const espInfo = {};
+                let totalAllFalhas = 0;
+                const falhasSet = new Set();
+                const falhaGlobal = {};
 
-                const dataHero = Object.entries(espFalha)
+                Object.entries(espFalha).forEach(([esp, falhas]) => {
+                    const entries = Object.entries(falhas).sort((a, b) => b[1] - a[1]);
+                    const total = entries.reduce((s, [, v]) => s + v, 0);
+                    const rankMap = {};
+                    entries.forEach(([f, v], idx) => {
+                        rankMap[f] = idx + 1;
+                        falhasSet.add(f);
+                        if (!falhaGlobal[f]) falhaGlobal[f] = { total: 0, espSet: new Set(), espMap: {} };
+                        falhaGlobal[f].total += v;
+                        falhaGlobal[f].espSet.add(esp);
+                        falhaGlobal[f].espMap[esp] = (falhaGlobal[f].espMap[esp] || 0) + v;
+                    });
+                    totalAllFalhas += total;
+                    espInfo[esp] = {
+                        total,
+                        entries,
+                        rankMap,
+                        distinct: entries.length,
+                        topFalha: entries[0]?.[0] || 'N/A',
+                        topFalhaCount: entries[0]?.[1] || 0
+                    };
+                });
+
+                const espTotais = Object.entries(espInfo).map(([esp, info]) => [esp, info.total]);
+                const espTop = new Set(aplicarTop(espTotais.sort((a, b) => b[1] - a[1]), 'chartFalhaEspecialidadeHero').map(e => e[0]));
+                const distinctTotal = falhasSet.size || 0;
+                const falhaGlobalEntries = Object.entries(falhaGlobal).map(([f, info]) => ({
+                    falha: f,
+                    total: info.total,
+                    espCount: info.espSet ? info.espSet.size : 0,
+                    espMap: info.espMap || {}
+                })).sort((a, b) => b.total - a.total);
+                const falhaGlobalRank = {};
+                const falhaGlobalTopEsp = {};
+                falhaGlobalEntries.forEach((item, idx) => {
+                    falhaGlobalRank[item.falha] = idx + 1;
+                    const topEsp = Object.entries(item.espMap).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                    falhaGlobalTopEsp[item.falha] = topEsp;
+                });
+
+                const dataHero = Object.entries(espInfo)
                     .filter(([esp]) => espTop.has(esp))
-                    .map(([esp, falhas]) => ({
+                    .map(([esp, info]) => ({
                         name: esp,
-                        children: Object.entries(falhas).map(([f, v]) => ({ name: f, value: v }))
+                        value: info.total,
+                        esp,
+                        espTotal: info.total,
+                        totalAll: totalAllFalhas,
+                        distinctFalhasEsp: info.distinct,
+                        distinctFalhasTotal: distinctTotal,
+                        topFalha: info.topFalha,
+                        topFalhaCount: info.topFalhaCount,
+                        percentTotal: totalAllFalhas ? (info.total / totalAllFalhas) * 100 : 0,
+                        topFalhas: info.entries.slice(0, 3),
+                        children: info.entries.map(([f, v]) => ({
+                            name: f,
+                            value: v,
+                            esp,
+                            falha: f,
+                            espTotal: info.total,
+                            totalAll: totalAllFalhas,
+                            distinctFalhasEsp: info.distinct,
+                            distinctFalhasTotal: distinctTotal,
+                            rankInEsp: info.rankMap[f] || null,
+                            rankGlobal: falhaGlobalRank[f] || null,
+                            espCountGlobal: falhaGlobal[f]?.espSet ? falhaGlobal[f].espSet.size : 0,
+                            falhaTopEsp: falhaGlobalTopEsp[f] || [],
+                            percentEsp: info.total ? (v / info.total) * 100 : 0,
+                            percentTotal: totalAllFalhas ? (v / totalAllFalhas) * 100 : 0
+                        }))
                     }));
 
-                if (!dataHero.length) noData(chartFalhaHero);
-                else chartFalhaHero.setOption({
-                    color: ['#00E5FF', '#2979FF', '#651FFF', '#D500F9', '#FF1744', '#FF9100', '#C6FF00', '#00E676', '#1DE9B6', '#FFEA00', '#FF3D00', '#00B0FF'],
-                    tooltip: {
-                        trigger: 'item',
-                        formatter: (p) => {
-                            if (p.data && p.data.value !== undefined) {
-                                return `<b>${p.name}</b><br/>Ocorrencias: ${p.data.value}`;
-                            }
-                            return `<b>${p.name}</b>`;
-                        }
-                    },
-                    series: [{
-                        type: 'sunburst',
-                        radius: ['18%', '92%'],
-                        minAngle: 4,
-                        data: dataHero,
-                        sort: null,
-                        label: { show: false },
-                        emphasis: { focus: 'ancestor', label: { show: true, fontSize: 12 } },
-                        labelLayout: { hideOverlap: true },
-                        levels: [
-                            {
-                                r0: '18%',
-                                r: '42%',
-                                label: { show: true, rotate: 0, fontSize: 13, color: '#111', overflow: 'truncate' },
-                                itemStyle: { borderWidth: 2 }
+                if (!dataHero.length) {
+                    noData(chartFalhaHero);
+                } else {
+                    const formatName = (name, max = 22) => {
+                        if (!name) return '';
+                        return name.length > max ? `${name.slice(0, max - 1)}…` : name;
+                    };
+                    const levelsBase = [
+                        {
+                            r0: '16%',
+                            r: '40%',
+                            label: {
+                                show: true,
+                                rotate: 0,
+                                fontSize: 12,
+                                color: '#111',
+                                formatter: (p) => formatName(p.name, 26),
+                                overflow: 'truncate'
                             },
-                            {
-                                r0: '42%',
-                                r: '70%',
-                                label: { show: true, rotate: 'radial', fontSize: 11, color: '#222', overflow: 'truncate' },
-                                itemStyle: { borderWidth: 1 }
-                            },
-                            {
-                                r0: '70%',
-                                r: '92%',
-                                label: { show: false }
-                            }
-                        ],
-                        itemStyle: {
-                            borderWidth: 1,
-                            borderColor: 'rgba(255,255,255,0.6)'
+                            itemStyle: { borderWidth: 2 }
+                        },
+                        {
+                            r0: '40%',
+                            r: '68%',
+                            label: { show: false },
+                            itemStyle: { borderWidth: 1 }
+                        },
+                        {
+                            r0: '68%',
+                            r: '94%',
+                            label: { show: false }
                         }
-                    }]
-                }, { notMerge: true });
+                    ];
+                    let activeEspForLabels = null;
+                    const levelsFalhas = [
+                        levelsBase[0],
+                        {
+                            r0: '40%',
+                            r: '68%',
+                            label: {
+                                show: true,
+                                rotate: 'radial',
+                                fontSize: 10,
+                                color: '#111',
+                                formatter: (p) => {
+                                    if (activeEspForLabels && p.data && p.data.esp === activeEspForLabels) {
+                                        return formatName(p.name, 20);
+                                    }
+                                    return '';
+                                },
+                                overflow: 'truncate'
+                            },
+                            itemStyle: { borderWidth: 1 }
+                        },
+                        levelsBase[2]
+                    ];
+
+                    chartFalhaHero.setOption({
+                        color: ['#00E5FF', '#2979FF', '#651FFF', '#D500F9', '#FF1744', '#FF9100', '#C6FF00', '#00E676', '#1DE9B6', '#FFEA00', '#FF3D00', '#00B0FF'],
+                        tooltip: { show: false },
+                        series: [{
+                            type: 'sunburst',
+                            radius: ['16%', '94%'],
+                            center: ['38%', '50%'],
+                            minAngle: 3,
+                            data: dataHero,
+                            sort: null,
+                            label: { show: false },
+                            stateAnimation: { duration: 900, easing: 'cubicInOut' },
+                            emphasis: {
+                                focus: 'none',
+                                scale: true,
+                                scaleSize: 6,
+                                label: { show: false },
+                                itemStyle: {
+                                    shadowBlur: 26,
+                                    shadowColor: 'rgba(0,229,255,0.9)',
+                                    shadowOffsetX: 0,
+                                    shadowOffsetY: 0
+                                }
+                            },
+                            labelLayout: { hideOverlap: true },
+                            levels: levelsBase,
+                            itemStyle: {
+                                borderWidth: 1,
+                                borderColor: 'rgba(255,255,255,0.6)'
+                            }
+                        }]
+                    }, { notMerge: true });
+
+                    const fmtPct = (v) => `${Math.max(0, v || 0).toFixed(1)}%`;
+                    const fmtNum = (v) => (v || 0).toLocaleString('pt-BR');
+                    const row = (label, value, highlight = false) =>
+                        `<div class="falha-hero-info-row"><span>${label}</span><strong class="${highlight ? 'falha-hero-info-highlight' : ''}">${value}</strong></div>`;
+
+                    const setInfoHtml = (html) => {
+                        document.querySelectorAll('.falha-hero-info').forEach(el => {
+                            el.innerHTML = html;
+                        });
+                    };
+
+                    const renderDefault = () => {
+                        const totalTop = dataHero.reduce((s, d) => s + (d.value || 0), 0);
+                        setInfoHtml(`
+                            <div class="falha-hero-info-title">Mapa de Falhas</div>
+                            <div class="falha-hero-info-sub">Passe o mouse para ver o detalhamento completo.</div>
+                            <div class="falha-hero-info-grid">
+                                ${row('Especialidades exibidas', fmtNum(dataHero.length))}
+                                ${row('Falhas exibidas', fmtNum(totalTop))}
+                                ${row('Falhas totais (geral)', fmtNum(totalAllFalhas))}
+                                ${row('Falhas distintas (geral)', fmtNum(distinctTotal))}
+                            </div>
+                        `);
+                    };
+
+                    const renderInfo = (p) => {
+                        if (!p || !p.data) return;
+                        const d = p.data;
+                        if (d.falha) {
+                            const topEspecialidades = d.falhaTopEsp?.length
+                                ? d.falhaTopEsp.map(([e, v]) => `${e} (${v})`).join('; ')
+                                : 'N/A';
+                            setInfoHtml(`
+                                <div class="falha-hero-info-title">Falha de Estrutura</div>
+                                <div class="falha-hero-info-sub">${d.falha}</div>
+                                <div class="falha-hero-info-grid">
+                                    ${row('Especialidade', d.esp || 'Sem Especialidade')}
+                                    ${row('Ocorrencias', fmtNum(d.value), true)}
+                                    ${row('% da especialidade', fmtPct(d.percentEsp))}
+                                    ${row('% do total', fmtPct(d.percentTotal))}
+                                    ${row('Ranking na especialidade', d.rankInEsp ? `#${d.rankInEsp}` : 'N/A')}
+                                    ${row('Ranking geral da falha', d.rankGlobal ? `#${d.rankGlobal}` : 'N/A')}
+                                    ${row('Especialidades afetadas', fmtNum(d.espCountGlobal || 0))}
+                                    ${row('Total falhas na especialidade', fmtNum(d.espTotal))}
+                                    ${row('Total falhas no geral', fmtNum(d.totalAll))}
+                                    ${row('Top especialidades (falha)', topEspecialidades)}
+                                </div>
+                            `);
+                        } else if (d.esp) {
+                            const mediaPorFalha = d.distinctFalhasEsp ? (d.espTotal / d.distinctFalhasEsp) : 0;
+                            const topFalhas = d.topFalhas?.length
+                                ? d.topFalhas.map(([f, v]) => `${f} (${v})`).join('; ')
+                                : 'N/A';
+                            setInfoHtml(`
+                                <div class="falha-hero-info-title">Especialidade</div>
+                                <div class="falha-hero-info-sub">${d.esp}</div>
+                                <div class="falha-hero-info-grid">
+                                    ${row('Total de falhas', fmtNum(d.espTotal), true)}
+                                    ${row('% do total', fmtPct(d.percentTotal))}
+                                    ${row('Falhas distintas', fmtNum(d.distinctFalhasEsp))}
+                                    ${row('Media por falha', mediaPorFalha ? mediaPorFalha.toFixed(2) : '0')}
+                                    ${row('Falha mais frequente', d.topFalha || 'N/A')}
+                                    ${row('Ocorrencias da top falha', fmtNum(d.topFalhaCount || 0))}
+                                    ${row('Top 3 falhas', topFalhas)}
+                                    ${row('Total falhas no geral', fmtNum(d.totalAll))}
+                                </div>
+                            `);
+                        } else {
+                            renderDefault();
+                        }
+                    };
+
+                    const getPulseState = (chart) => {
+                        if (!chart.__pulseState) chart.__pulseState = { timer: null, index: null, on: false };
+                        return chart.__pulseState;
+                    };
+
+                    const setFalhaLabels = (chart, show, espName = null) => {
+                        if (!chart) return;
+                        const next = !!show;
+                        activeEspForLabels = next ? (espName || null) : null;
+                        if (chart.__falhaLabels === next && chart.__falhaLabelsEsp === activeEspForLabels) return;
+                        chart.__falhaLabels = next;
+                        chart.__falhaLabelsEsp = activeEspForLabels;
+                        try {
+                            chart.setOption({
+                                series: [{ levels: next ? levelsFalhas : levelsBase }]
+                            }, { notMerge: false });
+                        } catch (e) {}
+                    };
+
+                    const stopPulse = (chart) => {
+                        if (!chart) return;
+                        const state = getPulseState(chart);
+                        if (state.timer) {
+                            clearInterval(state.timer);
+                            state.timer = null;
+                        }
+                        if (state.index !== null) {
+                            try {
+                                chart.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: state.index });
+                            } catch (e) {}
+                        }
+                        state.index = null;
+                        state.on = false;
+                    };
+
+                    const startPulse = (chart, dataIndex) => {
+                        if (!chart || dataIndex === undefined || dataIndex === null) return;
+                        stopPulse(chart);
+                        const state = getPulseState(chart);
+                        state.index = dataIndex;
+                        state.on = false;
+                        state.timer = setInterval(() => {
+                            state.on = !state.on;
+                            try {
+                                chart.dispatchAction({
+                                    type: state.on ? 'highlight' : 'downplay',
+                                    seriesIndex: 0,
+                                    dataIndex
+                                });
+                            } catch (e) {}
+                        }, 1300);
+                    };
+
+                    const attachFalhaHero = (chart) => {
+                        if (!chart) return;
+                        chart.off('mouseover');
+                        chart.off('globalout');
+                        chart.on('mouseover', (p) => {
+                            renderInfo(p);
+                            const d = p && p.data ? p.data : null;
+                            if (d && (d.esp || d.falha)) setFalhaLabels(chart, true, d.esp || null);
+                            if (p && p.dataIndex !== undefined) startPulse(chart, p.dataIndex);
+                        });
+                        chart.on('globalout', () => {
+                            stopPulse(chart);
+                            setFalhaLabels(chart, false, null);
+                            renderDefault();
+                        });
+                    };
+
+                    stopPulse(chartFalhaHero);
+                    setFalhaLabels(chartFalhaHero, false);
+                    renderDefault();
+                    attachFalhaHero(chartFalhaHero);
+                    window.falhaHeroMeta = {
+                        levelsBase,
+                        levelsFalhas,
+                        renderDefault,
+                        renderInfo,
+                        attach: attachFalhaHero
+                    };
+                }
             }
 
             const falhaEspEntries = aplicarTop(sortedEntries(falhaEsp), 'chartFalhaEspecialidade');
