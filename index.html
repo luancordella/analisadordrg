@@ -3030,10 +3030,16 @@
                     // ==========================================
                     const renderInfoAesthetic = (p) => {
                         const d = p.data;
+                        const isDark = (document.documentElement && document.documentElement.classList.contains('dark'))
+                            || (document.body && document.body.classList.contains('dark'))
+                            || (document.querySelector && document.querySelector('.presentation-overlay.presentation-dark'));
+                        const labelColor = isDark ? '#cfd3dc' : '#555';
+                        const valueColor = isDark ? '#f3f4f6' : '#111';
+                        const accentColor = isDark ? '#4ade80' : '#00c853';
                         const rowIco = (ico, label, val, highlight = false) =>
                             `<div class="falha-hero-info-row" style="border-bottom: 1px dashed rgba(0,0,0,0.08); padding: 8px 0; display:flex; justify-content:space-between;">
-                                <span style="color: #555; font-size: 11px; font-weight:500;">${ico} ${label}</span>
-                                <strong style="color: ${highlight ? '#00c853' : '#111'}; font-size: 13px;">${val}</strong>
+                                <span style="color: ${labelColor}; font-size: 11px; font-weight:500;">${ico} ${label}</span>
+                                <strong style="color: ${highlight ? accentColor : valueColor}; font-size: 13px;">${val}</strong>
                             </div>`;
 
                         if (d.falha) {
