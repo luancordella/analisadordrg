@@ -3025,256 +3025,227 @@
                 if (!dataHero.length) {
                     noData(chartFalhaHero);
                 } else {
-                    const formatName = (name, max = 22) => {
-                        if (!name) return '';
-                        return name.length > max ? `${name.slice(0, max - 1)}…` : name;
+                    // ==========================================
+                    // 1. FUNCAO DE RENDERIZACAO LATERAL (ESTETICA)
+                    // ==========================================
+                    const renderInfoAesthetic = (p) => {
+                        const d = p.data;
+                        const rowIco = (ico, label, val, highlight = false) =>
+                            `<div class="falha-hero-info-row" style="border-bottom: 1px dashed rgba(0,0,0,0.08); padding: 8px 0; display:flex; justify-content:space-between;">
+                                <span style="color: #555; font-size: 11px; font-weight:500;">${ico} ${label}</span>
+                                <strong style="color: ${highlight ? '#00c853' : '#111'}; font-size: 13px;">${val}</strong>
+                            </div>`;
+
+                        if (d.falha) {
+                            const topEspList = d.falhaTopEsp?.length
+                                ? d.falhaTopEsp.map(([e, v]) => `<span style="background:#e3f2fd; color:#1565c0; padding:3px 8px; border-radius:4px; font-size:10px; margin-right:4px; margin-bottom:4px; display:inline-block; border:1px solid #bbdefb;">${e} (${v})</span>`).join('')
+                                : 'N/A';
+
+                            const html = `
+                                <div class="falha-hero-info-title" style="font-size:15px; color: #D500F9; margin-bottom:5px;">${d.falha}</div>
+                                <div class="falha-hero-info-sub" style="margin-bottom: 15px; color: #777; border-bottom:2px solid #D500F9; padding-bottom:5px; display:inline-block;">Detalhamento da Falha</div>
+                                <div class="falha-hero-info-grid">
+                                    ${rowIco('🏥', 'Especialidade', d.esp || 'N/A')}
+                                    ${rowIco('🔢', 'Ocorrencias', d.value, true)}
+                                    ${rowIco('📊', '% na Especialidade', d.percentEsp.toFixed(1) + '%')}
+                                    ${rowIco('🌍', '% no Total Geral', d.percentTotal.toFixed(1) + '%')}
+                                    ${rowIco('🏆', 'Rank (Esp)', '#' + (d.rankInEsp || '-'))}
+                                    ${rowIco('🏆', 'Rank (Global)', '#' + (d.rankGlobal || '-'))}
+                                    ${rowIco('🏥', 'Especialidades Atingidas', d.espCountGlobal || 0)}
+                                    <div class="falha-hero-info-row" style="border:none; padding-top:10px; margin-top:5px;">
+                                        <span style="color: #555; font-size: 11px; font-weight:600; width:100%;">📌 TOP ESPECIALIDADES (ESTA FALHA)</span>
+                                    </div>
+                                    <div style="display:flex; flex-wrap:wrap; gap:4px; width:100%;">${topEspList}</div>
+                                </div>
+                            `;
+                            document.querySelectorAll('.falha-hero-info').forEach(el => el.innerHTML = html);
+                        } else if (d.esp) {
+                            const media = d.distinctFalhasEsp ? (d.espTotal / d.distinctFalhasEsp).toFixed(2) : '0';
+                            const topFalhasList = d.topFalhas?.length
+                                ? d.topFalhas.map(([f, v]) => `<span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:4px; font-size:10px; margin-right:4px; margin-bottom:4px; display:inline-block; border:1px solid #c8e6c9;">${f} (${v})</span>`).join('')
+                                : 'N/A';
+
+                            const html = `
+                                <div class="falha-hero-info-title" style="font-size:15px; color: #2979FF; margin-bottom:5px;">${d.esp}</div>
+                                <div class="falha-hero-info-sub" style="margin-bottom: 15px; color: #777; border-bottom:2px solid #2979FF; padding-bottom:5px; display:inline-block;">Visao Geral</div>
+                                <div class="falha-hero-info-grid">
+                                    ${rowIco('🚨', 'Total de Falhas', d.espTotal, true)}
+                                    ${rowIco('📊', '% do Total Geral', d.percentTotal.toFixed(1) + '%')}
+                                    ${rowIco('📉', 'Falhas Distintas', d.distinctFalhasEsp)}
+                                    ${rowIco('⚖️', 'Media por Falha', media)}
+                                    ${rowIco('🔥', 'Falha Principal', d.topFalha || 'N/A')}
+                                    ${rowIco('🔥', 'Ocorrencias (Top)', d.topFalhaCount || 0)}
+                                    <div class="falha-hero-info-row" style="border:none; padding-top:10px; margin-top:5px;">
+                                        <span style="color: #555; font-size: 11px; font-weight:600; width:100%;">📌 TOP 3 FALHAS</span>
+                                    </div>
+                                    <div style="display:flex; flex-wrap:wrap; gap:4px; width:100%;">${topFalhasList}</div>
+                                </div>
+                            `;
+                            document.querySelectorAll('.falha-hero-info').forEach(el => el.innerHTML = html);
+                        }
                     };
-                    const levelsBase = [
+
+                    // ==========================================
+                    // 2. CONFIGURACAO DE NIVEIS VISUAIS
+                    // ==========================================
+                    const levelsNormal = [
                         {
-                            r0: '16%',
-                            r: '40%',
+                            label: { show: false }
+                        },
+                        {
+                            itemStyle: { borderWidth: 2, borderColor: '#fff', gap: 2, shadowBlur: 5, shadowColor: 'rgba(0,0,0,0.2)' },
                             label: {
                                 show: true,
-                                rotate: 0,
-                                fontSize: 12,
-                                color: '#111',
-                                formatter: (p) => formatName(p.name, 26),
-                                overflow: 'truncate'
-                            },
-                            itemStyle: { borderWidth: 2 }
+                                position: 'inside',
+                                align: 'center',
+                                verticalAlign: 'middle',
+                                rotate: 'radial',
+                                fontSize: 13,
+                                fontWeight: 'bold',
+                                color: '#fff',
+                                textBorderColor: '#000',
+                                textBorderWidth: 3,
+                                formatter: (p) => p.name.length > 18 ? p.name.slice(0, 16) + '...' : p.name
+                            }
                         },
                         {
-                            r0: '40%',
-                            r: '68%',
-                            label: { show: false },
-                            itemStyle: { borderWidth: 1 }
-                        },
-                        {
-                            r0: '68%',
-                            r: '94%',
+                            itemStyle: { borderWidth: 1, borderColor: '#fff', gap: 1 },
                             label: { show: false }
                         }
                     ];
-                    let activeEspForLabels = null;
-                    const levelsFalhas = [
-                        levelsBase[0],
+
+                    const levelsBigBang = [
                         {
-                            r0: '40%',
-                            r: '68%',
-                            label: {
-                                show: true,
-                                rotate: 'radial',
-                                fontSize: 10,
-                                color: '#111',
-                                formatter: (p) => {
-                                    if (activeEspForLabels && p.data && p.data.esp === activeEspForLabels) {
-                                        return formatName(p.name, 20);
-                                    }
-                                    return '';
-                                },
-                                overflow: 'truncate'
-                            },
-                            itemStyle: { borderWidth: 1 }
+                            label: { show: false }
                         },
-                        levelsBase[2]
+                        {
+                            itemStyle: {
+                                borderWidth: 4,
+                                borderColor: '#fff',
+                                gap: 25,
+                                shadowBlur: 20,
+                                shadowColor: 'rgba(0,0,0,0.4)'
+                            },
+                            label: { show: false }
+                        }
                     ];
 
+                    const radiusNormal = ['20%', '85%'];
+                    const radiusBigBang = ['72%', '97%'];
+                    const pctToNum = (v) => (typeof v === 'string' && v.endsWith('%')) ? (parseFloat(v) / 100) : 0;
+                    const isBigBang = (chart) => !!chart.__bigBangMode;
+                    const setBigBang = (chart, on) => { chart.__bigBangMode = !!on; };
+                    const applyNormal = (chart) => {
+                        setBigBang(chart, false);
+                        chart.setOption({
+                            series: [{
+                                radius: radiusNormal,
+                                levels: levelsNormal,
+                                data: dataHero
+                            }]
+                        }, { notMerge: false });
+                    };
+                    const applyBigBang = (chart, params) => {
+                        setBigBang(chart, true);
+                        const falhasDaEspecialidade = params.data.children || [];
+                        chart.setOption({
+                            series: [{
+                                radius: radiusBigBang,
+                                levels: levelsBigBang,
+                                data: falhasDaEspecialidade
+                            }]
+                        }, { notMerge: false });
+                    };
+                    const handleChartClick = (chart, params) => {
+                        if (params && params.data && params.data.falha) return;
+                        if (isBigBang(chart)) applyNormal(chart);
+                        else applyBigBang(chart, params);
+                        renderInfoAesthetic(params);
+                    };
+                    const bindCenterReset = (chart) => {
+                        if (!chart || !chart.getZr) return;
+                        const zr = chart.getZr();
+                        if (!zr) return;
+                        if (chart.__centerResetHandler) zr.off('click', chart.__centerResetHandler);
+                        chart.__centerResetHandler = (ev) => {
+                            const w = chart.getWidth();
+                            const h = chart.getHeight();
+                            const cx = w / 2;
+                            const cy = h / 2;
+                            const dx = ev.offsetX - cx;
+                            const dy = ev.offsetY - cy;
+                            const r = Math.sqrt(dx * dx + dy * dy);
+                            const onSeries = chart.containPixel({ seriesIndex: 0 }, [ev.offsetX, ev.offsetY]);
+                            if (onSeries) return;
+                            const innerPct = isBigBang(chart) ? pctToNum(radiusBigBang[0]) : pctToNum(radiusNormal[0]);
+                            const innerR = Math.min(w, h) / 2 * innerPct;
+                            if (r <= innerR) {
+                                applyNormal(chart);
+                            }
+                        };
+                        zr.on('click', chart.__centerResetHandler);
+                    };
+
+                    // ==========================================
+                    // 3. RENDERIZACAO INICIAL
+                    // ==========================================
                     chartFalhaHero.setOption({
                         color: ['#00E5FF', '#2979FF', '#651FFF', '#D500F9', '#FF1744', '#FF9100', '#C6FF00', '#00E676', '#1DE9B6', '#FFEA00', '#FF3D00', '#00B0FF'],
-                        tooltip: { show: false },
+                        tooltip: { show: true, backgroundColor: 'rgba(0,0,0,0.9)', textStyle: { color: '#fff', fontSize: 14 }, borderWidth: 0 },
                         series: [{
                             type: 'sunburst',
-                            radius: ['16%', '94%'],
-                            center: ['38%', '50%'],
-                            minAngle: 3,
-                            nodeClick: 'rootToNode',
+                            radius: radiusNormal,
+                            center: ['50%', '50%'],
                             data: dataHero,
                             sort: null,
-                            label: { show: false },
-                            stateAnimation: { duration: 900, easing: 'cubicInOut' },
-                            emphasis: {
-                                focus: 'none',
-                                scale: true,
-                                scaleSize: 6,
-                                label: { show: false },
-                                itemStyle: {
-                                    shadowBlur: 26,
-                                    shadowColor: 'rgba(0,229,255,0.9)',
-                                    shadowOffsetX: 0,
-                                    shadowOffsetY: 0
-                                }
-                            },
-                            blur: {
-                                itemStyle: { opacity: 1 }
-                            },
-                            labelLayout: { hideOverlap: true },
-                            levels: levelsBase,
-                            itemStyle: {
-                                borderWidth: 1,
-                                borderColor: 'rgba(255,255,255,0.6)'
-                            }
+                            levels: levelsNormal,
+                            animationType: 'expansion',
+                            animationDuration: 1200,
+                            animationEasing: 'cubicOut',
+                            emphasis: { focus: 'ancestor' }
                         }]
                     }, { notMerge: true });
 
-                    const fmtPct = (v) => `${Math.max(0, v || 0).toFixed(1)}%`;
-                    const fmtNum = (v) => (v || 0).toLocaleString('pt-BR');
-                    const row = (label, value, highlight = false) =>
-                        `<div class="falha-hero-info-row"><span>${label}</span><strong class="${highlight ? 'falha-hero-info-highlight' : ''}">${value}</strong></div>`;
+                    // ==========================================
+                    // 4. LOGICA DE CLIQUE (BIG BANG)
+                    // ==========================================
+                    setBigBang(chartFalhaHero, false);
+                    bindCenterReset(chartFalhaHero);
 
-                    const setInfoHtml = (html) => {
-                        document.querySelectorAll('.falha-hero-info').forEach(el => {
-                            el.innerHTML = html;
-                        });
-                    };
+                    chartFalhaHero.off('click');
+                    chartFalhaHero.on('click', (params) => {
+                        handleChartClick(chartFalhaHero, params);
+                    });
 
-                    const renderDefault = () => {
-                        const totalTop = dataHero.reduce((s, d) => s + (d.value || 0), 0);
-                        setInfoHtml(`
-                            <div class="falha-hero-info-title">Mapa de Falhas</div>
-                            <div class="falha-hero-info-sub">Passe o mouse para ver o detalhamento completo.</div>
-                            <div class="falha-hero-info-grid">
-                                ${row('Especialidades exibidas', fmtNum(dataHero.length))}
-                                ${row('Falhas exibidas', fmtNum(totalTop))}
-                                ${row('Falhas totais (geral)', fmtNum(totalAllFalhas))}
-                                ${row('Falhas distintas (geral)', fmtNum(distinctTotal))}
-                            </div>
-                        `);
-                    };
+                    // ==========================================
+                    // 5. MOUSEOVER (INTERACAO RAPIDA)
+                    // ==========================================
+                    chartFalhaHero.off('mouseover');
+                    chartFalhaHero.on('mouseover', (params) => {
+                        renderInfoAesthetic(params);
+                    });
 
-                    const renderInfo = (p) => {
-                        if (!p || !p.data) return;
-                        const d = p.data;
-                        if (d.falha) {
-                            const topEspecialidades = d.falhaTopEsp?.length
-                                ? d.falhaTopEsp.map(([e, v]) => `${e} (${v})`).join('; ')
-                                : 'N/A';
-                            setInfoHtml(`
-                                <div class="falha-hero-info-title">Falha de Estrutura</div>
-                                <div class="falha-hero-info-sub">${d.falha}</div>
-                                <div class="falha-hero-info-grid">
-                                    ${row('Especialidade', d.esp || 'Sem Especialidade')}
-                                    ${row('Ocorrencias', fmtNum(d.value), true)}
-                                    ${row('% da especialidade', fmtPct(d.percentEsp))}
-                                    ${row('% do total', fmtPct(d.percentTotal))}
-                                    ${row('Ranking na especialidade', d.rankInEsp ? `#${d.rankInEsp}` : 'N/A')}
-                                    ${row('Ranking geral da falha', d.rankGlobal ? `#${d.rankGlobal}` : 'N/A')}
-                                    ${row('Especialidades afetadas', fmtNum(d.espCountGlobal || 0))}
-                                    ${row('Total falhas na especialidade', fmtNum(d.espTotal))}
-                                    ${row('Total falhas no geral', fmtNum(d.totalAll))}
-                                    ${row('Top especialidades (falha)', topEspecialidades)}
-                                </div>
-                            `);
-                        } else if (d.esp) {
-                            const mediaPorFalha = d.distinctFalhasEsp ? (d.espTotal / d.distinctFalhasEsp) : 0;
-                            const topFalhas = d.topFalhas?.length
-                                ? d.topFalhas.map(([f, v]) => `${f} (${v})`).join('; ')
-                                : 'N/A';
-                            setInfoHtml(`
-                                <div class="falha-hero-info-title">Especialidade</div>
-                                <div class="falha-hero-info-sub">${d.esp}</div>
-                                <div class="falha-hero-info-grid">
-                                    ${row('Total de falhas', fmtNum(d.espTotal), true)}
-                                    ${row('% do total', fmtPct(d.percentTotal))}
-                                    ${row('Falhas distintas', fmtNum(d.distinctFalhasEsp))}
-                                    ${row('Media por falha', mediaPorFalha ? mediaPorFalha.toFixed(2) : '0')}
-                                    ${row('Falha mais frequente', d.topFalha || 'N/A')}
-                                    ${row('Ocorrencias da top falha', fmtNum(d.topFalhaCount || 0))}
-                                    ${row('Top 3 falhas', topFalhas)}
-                                    ${row('Total falhas no geral', fmtNum(d.totalAll))}
-                                </div>
-                            `);
-                        } else {
-                            renderDefault();
-                        }
-                    };
-
-                    const getPulseState = (chart) => {
-                        if (!chart.__pulseState) chart.__pulseState = { timer: null, index: null, on: false };
-                        return chart.__pulseState;
-                    };
-
-                    const setFalhaLabels = (chart, show, espName = null) => {
-                        if (!chart) return;
-                        const next = !!show;
-                        activeEspForLabels = next ? (espName || null) : null;
-                        if (chart.__falhaLabels === next && chart.__falhaLabelsEsp === activeEspForLabels) return;
-                        chart.__falhaLabels = next;
-                        chart.__falhaLabelsEsp = activeEspForLabels;
-                        try {
-                            chart.setOption({
-                                series: [{ levels: next ? levelsFalhas : levelsBase }]
-                            }, { notMerge: false });
-                        } catch (e) {}
-                    };
-
-                    const stopPulse = (chart) => {
-                        if (!chart) return;
-                        const state = getPulseState(chart);
-                        if (state.timer) {
-                            clearInterval(state.timer);
-                            state.timer = null;
-                        }
-                        if (state.index !== null) {
-                            try {
-                                chart.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: state.index });
-                            } catch (e) {}
-                        }
-                        state.index = null;
-                        state.on = false;
-                    };
-
-                    const startPulse = (chart, dataIndex) => {
-                        if (!chart || dataIndex === undefined || dataIndex === null) return;
-                        stopPulse(chart);
-                        const state = getPulseState(chart);
-                        state.index = dataIndex;
-                        state.on = false;
-                        state.timer = setInterval(() => {
-                            state.on = !state.on;
-                            try {
-                                chart.dispatchAction({
-                                    type: state.on ? 'highlight' : 'downplay',
-                                    seriesIndex: 0,
-                                    dataIndex
-                                });
-                            } catch (e) {}
-                        }, 1300);
-                    };
+                    chartFalhaHero.off('globalout');
 
                     const attachFalhaHero = (chart) => {
                         if (!chart) return;
+                        chart.off('click');
                         chart.off('mouseover');
                         chart.off('globalout');
-                        chart.off('click');
-                        chart.on('mouseover', (p) => {
-                            renderInfo(p);
-                            const d = p && p.data ? p.data : null;
-                            if (d && (d.esp || d.falha)) setFalhaLabels(chart, true, d.esp || null);
-                            if (p && p.dataIndex !== undefined) startPulse(chart, p.dataIndex);
+                        if (chart.__bigBangMode === undefined) setBigBang(chart, false);
+                        bindCenterReset(chart);
+                        chart.on('click', (params) => {
+                            handleChartClick(chart, params);
                         });
-                        chart.on('click', (p) => {
-                            if (!p || !p.data) return;
-                            renderInfo(p);
-                            const d = p.data;
-                            if (d.esp || d.falha) setFalhaLabels(chart, true, d.esp || null);
-                        });
-                        chart.on('globalout', () => {
-                            stopPulse(chart);
-                            setFalhaLabels(chart, false, null);
-                            renderDefault();
+                        chart.on('mouseover', (params) => {
+                            renderInfoAesthetic(params);
                         });
                     };
 
-                    stopPulse(chartFalhaHero);
-                    setFalhaLabels(chartFalhaHero, false);
-                    renderDefault();
-                    attachFalhaHero(chartFalhaHero);
                     window.falhaHeroMeta = {
-                        levelsBase,
-                        levelsFalhas,
-                        renderDefault,
-                        renderInfo,
-                        attach: attachFalhaHero
+                        attach: attachFalhaHero,
+                        renderDefault: () => {},
+                        renderInfo: renderInfoAesthetic
                     };
                 }
             }
