@@ -280,14 +280,14 @@
         }
 
         .chart-hero .chart-wrapper {
-            height: 520px;
+            height: 560px;
         }
 
         .falha-hero-layout {
             display: flex;
             gap: 14px;
             align-items: stretch;
-            height: 520px;
+            height: 560px;
         }
 
         .falha-hero-layout .chart-wrapper {
@@ -3110,7 +3110,22 @@
                         },
                         {
                             itemStyle: { borderWidth: 1, borderColor: '#fff', gap: 1 },
-                            label: { show: false }
+                            label: { show: false },
+                            emphasis: {
+                                label: {
+                                    show: true,
+                                    position: 'inside',
+                                    align: 'center',
+                                    verticalAlign: 'middle',
+                                    rotate: 'radial',
+                                    fontSize: 12,
+                                    fontWeight: 'bold',
+                                    color: '#fff',
+                                    textBorderColor: '#000',
+                                    textBorderWidth: 2,
+                                    formatter: (p) => p.name.length > 22 ? p.name.slice(0, 20) + '...' : p.name
+                                }
+                            }
                         }
                     ];
 
@@ -3126,12 +3141,30 @@
                                 shadowBlur: 20,
                                 shadowColor: 'rgba(0,0,0,0.4)'
                             },
-                            label: { show: false }
+                            label: { show: false },
+                            emphasis: {
+                                label: {
+                                    show: true,
+                                    position: 'inside',
+                                    align: 'center',
+                                    verticalAlign: 'middle',
+                                    rotate: 'radial',
+                                    fontSize: 18,
+                                    fontWeight: '800',
+                                    color: '#fff',
+                                    textBorderColor: '#000',
+                                    textBorderWidth: 2,
+                                    formatter: (p) => {
+                                        const pct = p.data.percentEsp || 0;
+                                        return pct.toFixed(1) + '%';
+                                    }
+                                }
+                            }
                         }
                     ];
 
-                    const radiusNormal = ['20%', '85%'];
-                    const radiusBigBang = ['72%', '97%'];
+                    const radiusNormal = ['20%', '90%'];
+                    const radiusBigBang = ['75%', '98%'];
                     const pctToNum = (v) => (typeof v === 'string' && v.endsWith('%')) ? (parseFloat(v) / 100) : 0;
                     const isBigBang = (chart) => !!chart.__bigBangMode;
                     const setBigBang = (chart, on) => { chart.__bigBangMode = !!on; };
@@ -3141,26 +3174,69 @@
                             series: [{
                                 radius: radiusNormal,
                                 levels: levelsNormal,
-                                data: dataHero
+                                data: dataHero,
+                                startAngle: 0,
+                                animationDurationUpdate: 1800,
+                                animationEasingUpdate: 'cubicInOut',
+                                animationDelayUpdate: (idx) => idx * 14
                             }]
                         }, { notMerge: false });
                     };
                     const applyBigBang = (chart, params) => {
                         setBigBang(chart, true);
                         const falhasDaEspecialidade = params.data.children || [];
+                        if (chart.__spinAngle === undefined) chart.__spinAngle = 0;
+                        const nextSpin = chart.__spinAngle + 360;
+                        chart.__spinAngle = nextSpin;
                         chart.setOption({
                             series: [{
                                 radius: radiusBigBang,
                                 levels: levelsBigBang,
-                                data: falhasDaEspecialidade
+                                data: falhasDaEspecialidade,
+                                startAngle: nextSpin,
+                                animationDurationUpdate: 2800,
+                                animationEasingUpdate: 'cubicInOut',
+                                animationDelayUpdate: (idx) => idx * 18
                             }]
                         }, { notMerge: false });
+                        setTimeout(() => {
+                            try {
+                                chart.setOption({
+                                    series: [{
+                                        levels: [{
+                                            itemStyle: { gap: 12 }
+                                        }, {
+                                            itemStyle: { gap: 25 }
+                                        }]
+                                    }]
+                                }, { notMerge: false });
+                            } catch (e) {}
+                        }, 260);
                     };
                     const handleChartClick = (chart, params) => {
                         if (params && params.data && params.data.falha) return;
                         if (isBigBang(chart)) applyNormal(chart);
                         else applyBigBang(chart, params);
                         renderInfoAesthetic(params);
+                    };
+                    const pulseSequence = (chart, count = 10, interval = 90) => {
+                        if (!chart || !chart.dispatchAction) return;
+                        let idx = 0;
+                        if (chart.__pulseSeqTimer) clearInterval(chart.__pulseSeqTimer);
+                        chart.__pulseSeqTimer = setInterval(() => {
+                            try {
+                                chart.dispatchAction({ type: 'downplay', seriesIndex: 0 });
+                                chart.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: idx });
+                            } catch (e) {}
+                            idx += 1;
+                            if (idx >= count) {
+                                clearInterval(chart.__pulseSeqTimer);
+                                chart.__pulseSeqTimer = null;
+                                try {
+                                    chart.dispatchAction({ type: 'downplay', seriesIndex: 0 });
+                                } catch (e) {}
+                            }
+                        }, interval);
                     };
                     const bindCenterReset = (chart) => {
                         if (!chart || !chart.getZr) return;
@@ -3199,9 +3275,14 @@
                             data: dataHero,
                             sort: null,
                             levels: levelsNormal,
+                            label: { show: false },
                             animationType: 'expansion',
-                            animationDuration: 1200,
+                            animationDuration: 2000,
                             animationEasing: 'cubicOut',
+                            animationDelay: (idx) => idx * 18,
+                            animationDurationUpdate: 1800,
+                            animationEasingUpdate: 'cubicInOut',
+                            animationDelayUpdate: (idx) => idx * 14,
                             emphasis: { focus: 'ancestor' }
                         }]
                     }, { notMerge: true });
@@ -3215,6 +3296,12 @@
                     chartFalhaHero.off('click');
                     chartFalhaHero.on('click', (params) => {
                         handleChartClick(chartFalhaHero, params);
+                        if (!isBigBang(chartFalhaHero)) {
+                            pulseSequence(chartFalhaHero, Math.min(12, dataHero.length), 80);
+                        } else {
+                            const count = Math.min(12, (params.data && params.data.children ? params.data.children.length : 0));
+                            if (count > 0) pulseSequence(chartFalhaHero, count, 70);
+                        }
                     });
 
                     // ==========================================
